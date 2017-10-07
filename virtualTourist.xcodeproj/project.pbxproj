@@ -14,7 +14,6 @@
 		A00100B01F194B4B00F08F07 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A00100AE1F194B4B00F08F07 /* LaunchScreen.storyboard */; };
 		A00100BB1F194B4B00F08F07 /* virtualTouristTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00100BA1F194B4B00F08F07 /* virtualTouristTests.swift */; };
 		A00100C61F194B4C00F08F07 /* virtualTouristUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00100C51F194B4B00F08F07 /* virtualTouristUITests.swift */; };
-		A0DDCC511F463A8D00D9CEEC /* CoreDataMapViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0DDCC501F463A8D00D9CEEC /* CoreDataMapViewController.swift */; };
 		A0E219F71F33D6BC009D58B0 /* GCDBlackBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0E219F61F33D6BC009D58B0 /* GCDBlackBox.swift */; };
 		A0E219F91F33D740009D58B0 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0E219F81F33D740009D58B0 /* Constants.swift */; };
 		A0E219FC1F3E8926009D58B0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A0E219FA1F3E8926009D58B0 /* Model.xcdatamodeld */; };
@@ -56,7 +55,6 @@
 		A00100C11F194B4B00F08F07 /* virtualTouristUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = virtualTouristUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A00100C51F194B4B00F08F07 /* virtualTouristUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = virtualTouristUITests.swift; sourceTree = "<group>"; };
 		A00100C71F194B4C00F08F07 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		A0DDCC501F463A8D00D9CEEC /* CoreDataMapViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreDataMapViewController.swift; sourceTree = "<group>"; };
 		A0E219F61F33D6BC009D58B0 /* GCDBlackBox.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GCDBlackBox.swift; sourceTree = "<group>"; };
 		A0E219F81F33D740009D58B0 /* Constants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		A0E219FB1F3E8926009D58B0 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
@@ -150,7 +148,6 @@
 		A0DDCC4F1F4639C300D9CEEC /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
-				A0DDCC501F463A8D00D9CEEC /* CoreDataMapViewController.swift */,
 			);
 			name = Controllers;
 			sourceTree = "<group>";
@@ -306,7 +303,6 @@
 				A0E219F91F33D740009D58B0 /* Constants.swift in Sources */,
 				A0E219F71F33D6BC009D58B0 /* GCDBlackBox.swift in Sources */,
 				A0E21A031F414972009D58B0 /* Photo+CoreDataClass.swift in Sources */,
-				A0DDCC511F463A8D00D9CEEC /* CoreDataMapViewController.swift in Sources */,
 				A00100A51F194B4B00F08F07 /* MapViewController.swift in Sources */,
 				A0E21A021F414972009D58B0 /* Pin+CoreDataProperties.swift in Sources */,
 				A0E21A091F43C10D009D58B0 /* CoreDataStack.swift in Sources */,

@@ -84,6 +84,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Launched before
         if UserDefaults.standard.bool(forKey: "hasLaunchedBefore") { // Don't I need to set its bool to FALSE VERY FIRST TIME??? - Ans: NO, as by default, false is returned.
             // Do NOTHING - code @ mapVC will take care of retrieving the new value when user zooms OR retrieving the OLD value when user NEVER zooms
+            print("app has launched before... not setting its Region so that it can retrieve the old one")
         } else { /* first time launching */
             UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
             // SET initial zoom level - meaning: span + latitude/ longitude (I hv to make it up as there is no user's input yet

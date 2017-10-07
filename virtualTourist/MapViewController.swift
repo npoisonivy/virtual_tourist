@@ -21,6 +21,14 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     let stack = CoreDataStack(modelName: "Model")!
     
     // Part 1 - MARK - Properties
+    // this NSFetchedResultsController works with UI collection view and table view.
+    // <NSFetchRequestResult> is the result type
+    // this part is not neccessary because there is no use of Table / Collection view - we only have mapView!
+    
+    //NSFetchRequest
+    //fect the data using context
+    
+    /*
     var fetchedResultsController : NSFetchedResultsController<NSFetchRequestResult>? {
         didSet {
             fetchedResultsController?.delegate = self /* MapViewController.swift
@@ -33,17 +41,65 @@ class MapViewController: UIViewController, MKMapViewDelegate {
             // is it like - grab all the annotaions from the map, and then remove them all , and then (It's NEW) load the pin that is from core DATA
             // tableView.reloadData()
         }
-    }
+    } */
     
+    // delete part 1 as no use - instead , do below:
+    //1. create NSFetchRequest for Pin entity
+    //2. Use context to fetch the data using NSFetchRequest
+    
+    //stack.context.fetch .
+    
+    /*
+     func fetchAndPrintEachPerson() {
+     let fetchRequest = NSFetchRequest<Person>(entityName: "Person")
+     do {
+    
+         let fetchedResults = try managedObjectContext!.fetch(fetchRequest)
+         // type case fetchedResults to [Pin]
+         // fetchedResults  is array of Pin
+         // pin.lat,
+         for item in fetchedResults {
+         print(item.value(forKey: "name")!)
+         }
+         
+     } catch let error as NSError {
+         // something went wrong, print the error.
+         print(error.description)
+         }
+     }
+ */
+    // MARK: To Fetch Entity Pin's from NSManagedObjectContext's (save as "context) func "fetch"
+    func fetchAllPins() -> [Pin]? {  //  is this correct type of return? [Pin] - is class Pin
+        //1. create NSFetchRequest for Pin entity
+        let fetchRequest = NSFetchRequest<Pin>(entityName: "Pin") // <Pin> -> "public class Pin: NSManagedObject" - and since .fetch(expecting: NSFetchRequest  type, so we set fetchRequest = NSFetchRequest<Pin>
+        do {
+            //2. Use context to fetch the data using NSFetchRequest - //stack.context.fetch .
+            // we set let stack = CoreDataStack -> inside CoreDataStack is let context: NSManagedObjectContext -> so we call stack.context.fetch -> and inside "context" (=open class NSManagedObjectContext ) -> it has func "fetch" -> so, context.fetch
+            // template: let fetchedResults = try managedObjectContext!.fetch(fetchRequest)
+            let fetchedResults = try stack.context.fetch(fetchRequest) as [Pin] // right side returns [Pin]
+            print(fetchedResults)
+            return fetchedResults
+            
+        } catch let error as NSError {
+            // something went wrong, print the error.
+            print("error from func fetchAllPins() is \(error)")
+        }
+        return nil // it returns optional Pin - we need to return something in do/catch loop, so we set the [Pin]? as an optional
+    } // end of func fetchEachPin() {
+    
+
+    /*
     // Part 2 - MARK - Initializers
     init(fetchedResultsController fc : NSFetchedResultsController<NSFetchRequestResult>) {
         fetchedResultsController = fc
     }
+    */
     
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
+    
         self.mapView.delegate = self // self = MapViewController.swift -> since MapVC has "MKMapViewDelegate" -> self can call mapview's delegate func, now, assign property "mapView" this ability too (tableview has built-in, no need to do this part)
 
         // Mentor advises me to read more about tap/ other geseture recognizzer!
@@ -63,7 +119,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         
         // when viewDidLoad - only 2 scenerios - A. 1st launch, so i need to retrieve what was saved to "savedMapRegion" B. not 1st lauch, that will be taken care of , as new value has already been set!
     
-        // 0. get the value of pre-set "regionToSave"
+        // 0. get the value of pre-set "regionToSave" @ AppDelegate.swift
         if let savedRegion = UserDefaults.standard.object(forKey: "savedMapRegion") as? [String: Double] {
             // 1. convert elements from key "savedMapRegion" (array)
             let center = CLLocationCoordinate2D(latitude: savedRegion["mapRegionLat"]! , longitude: savedRegion["mapRegionLon"]!)
@@ -77,21 +133,36 @@ class MapViewController: UIViewController, MKMapViewDelegate {
             
             /* OR:
             let CoordinateRegion = MKCoordinateRegionMake(center, span)
-            // mapView.setRegion(<#T##region: MKCoordinateRegion##MKCoordinateRegion#>, animated: <#T##Bool#>)
+            // mapView.setRegion(region: MKCoordinateRegion, animated: <#T##Bool#>)
             mapView.setRegion(CoordinateRegion, animated: true)
             // setRegion - Changes the currently visible region and optionally animates the change.
             // above code works too! */
             
-            
-            
         } // END of "if let savedRegion =" - if let for: make sure "savedRegion" != nil
         
-        
-        
+  
         // MARK - fetch from coredata what user has dropped (get the pin info) -> and add it to the mapview after user returns to the app.
-
+        let allPins = fetchAllPins() as [Pin]! // this returns all pins saved to entity Pin... I want to retrieve all pins and then drop pin added to the map
         
-    
+        // add "if let" OR add "!" after [Pin] (ask MENTOR ???) to UNWRAP the optional pin value! - because returns type from fetchAllPins is - [Pin]? -> "?" = optional -
+        
+        var annotations = [MKPointAnnotation]() // create an array to store all pins' coordinate
+        
+        // use for loop to keep adding each annotation to mapView ?!
+        // class Pin has latitude & longitude
+        
+        for pin in allPins! {
+            let long = pin.longitude as Double
+            let lat = pin.latitude as Double
+            
+            let coordinates = CLLocationCoordinate2D(latitude: lat, longitude: long)
+            let annotation = MKPointAnnotation()
+            // convert latitude / longitude to MKPointAnnotation()   -> we need to do CLLocationCoordinate2D(latitude: lat, longitude: long
+            annotation.coordinate = coordinates
+            annotations.append(annotation)
+        }
+        mapView.addAnnotations(annotations) // most efficient way to add pins/ annotations on map - one time
+
     }
     
   
@@ -188,7 +259,7 @@ extension MapViewController {
         // MARK - add func xxx here - to pass "touchMapCoordinate"'s Lat & Long to Flickr's getPhoto API call
         // searchByCoordinate(lon, lat)
         
-        // MARK - trigger func to pass lon/ lat to create instance of a pin
+        // MARK - trigger func to pass lon/ lat to CREATE INSTANCE of a PIN - also, call ".save" to save this PIN instance to CORE DATA !
         createPinInstance(lon, lat)
         
         let annotation = MKPointAnnotation() // Pin
@@ -252,7 +323,12 @@ extension MapViewController {
         // 3. call a helper func to pass "url" as input to make the network call
         let request = URLRequest(url: flickrURLFromParameters(methodParameters))
         
-        // create network request
+        // create network request - check Flickr's app for the codes
+        
+        
+        
+        
+        
         
         
         // after "total pages" is returned, pass total page to func getPhotoFromFlickrBySearchWithRandomPage
@@ -310,16 +386,24 @@ extension MapViewController {
     
     // CREATE a Pin Instance
     private func createPinInstance(_ lon: Double, _ lat: Double) -> Void {
+        
+        // Create a PIN instance
+        // convenience init(latitude: Double, longitude: Double, context: NSManagedObjectContext) { from class PIN
         let newPin = Pin(latitude: lat, longitude: lon, context: stack.context)
+        
+        // there is no "save" function to be called YET - add it with do/ try/ catch block - to avoid FAILURE
+        do {
+            try stack.saveContext()
+            print("Successfully saved")
+            
+        } catch {
+            print("Saved failed")
+        }
+ 
         print("newPin is, \(newPin)")
+ 
+        // if need to save i/s autosave, here is the place to call save() -> Ans: Mentor- autosave only neeed when app is handling large data continously.
     }
-    
-    /*
-      convenience init(latitude: Double, longitude: Double, context: NSManagedObjectContext) {
- */
-    
-    
-    
 } // END of extension MapViewController {
 
 /* Here we create an enum with associated values and constrained to a generic type, you probably heard about generics in Swift, but what are they? Generic programming is a way to write functions and data types while making minimal assumptions about the type of data being used, Swift generics create code that does not get specific about underlying data types, allowing for elegant abstractions that produce cleaner code with fewer bugs! 
@@ -330,13 +414,34 @@ enum Result <T>{
 }
 
 
+// to do:
+// photos -> 
+// Create ONE view controller -> contains: 2/3 collection view and 1/3 a map view
+// data in collection view controller -> array -> fetch from CoreData and load on collection view controller?
+
+// store below in a function:
+// flicker API -> map to the photos (check Flickr's app)
+// photos -> stored using Core data  ------> two steps name and url (there is no binary data)
+// collection view reload
+// cellforItem at indexpath -> take each URL , -> calling data for session (HTTP get function) with image URL ->download the binary data for photo image
+// show binary data in photo image (create UI image from binary data)
+// - end-
 
 
 
+//30%
+// collection view -> view did load 
+// call the flicker API -> meta data -> image URL and title... (there is no binary data)
+// create entity for Photos before storing
+// photos -> stored using Core data  ------> two steps name and url (there is no binary data)
+//30%
+// name, url -> calling data for session (HTTP get function) with image URL ->download the binary data for photo image
+// show binary data in photo image (create UI image from binary data)
 
-
-
-
+// reload collection view
+// 40%
+// refresh collection view/ add collection view
+// delete all data, and call func of calling flicker API, reload data, refresh data
 
 
 
