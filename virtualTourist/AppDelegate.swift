@@ -15,16 +15,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     let stack = CoreDataStack(modelName: "Model")!
 
-    func removeDataForDebug() {
-        
-        // Remove previous stuff (if any) - it delects data but not the tables
-        do {
-          try stack.dropAllData()
-        } catch {
-            print("Error dropping all objects in DataBase")
-        }
-    }
-    
+// If you have below called, app would erase all data everytime app is refreshed!
+//    func removeDataForDebug() {
+//        
+//        // Remove previous stuff (if any) - it delects data but not the tables
+//        do {
+//          try stack.dropAllData()
+//        } catch {
+//            print("Error dropping all objects in DataBase")
+//        }
+//    }
+//    
     
     
 // This is where need to modify code
@@ -43,7 +44,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         print(paths[0])
         
         // call to remove all previous data - for easier debugging purpose
-        removeDataForDebug()
+        // If you have below called, app would erase all data everytime app is refreshed!
+       // removeDataForDebug()
         
         return true
     }
@@ -51,14 +53,27 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationWillResignActive(_ application: UIApplication) {
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
         // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
+        
+        do {
+            try stack.saveContext()
+            print("Successfully saved")
+            
+        } catch {
+            print("Saved failed")
+        }
+
     }
 
     func applicationDidEnterBackground(_ application: UIApplication) {
         // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
         
-        
-        // add user's zoom level, map center here too right?
+        do {
+            try stack.saveContext()
+            print("Successfully saved")
+        } catch {
+            print("Saved failed")
+        }
     }
 
     func applicationWillEnterForeground(_ application: UIApplication) {

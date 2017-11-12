@@ -24,7 +24,11 @@ struct Constants {
         static let APIScheme = "https"
         static let APIHost = "api.flickr.com"
         static let APIPath = "/services/rest"
-    
+        
+        static let SearchBBoxHalfWidth = 1.0
+        static let SearchBBoxHalfHeight = 1.0
+        static let SearchLatRange = (-90.0, 90.0)
+        static let SearchLonRange = (-180.0, 180.0)
     }
     
     // MARK: Flickr Parameter Keys - FlickrParameterKeys
@@ -35,9 +39,7 @@ struct Constants {
         static let Extras = "extras" // extras=url_m&....
         static let Format = "format"
         static let NoJsonCallback = "nojsoncallback"
-        
-        
-        static let BoundingBox = "bbox" // do we need bbox??? - pro: show photo around that area...
+        static let BoundingBox = "bbox" // do we need bbox? YES - pro: want to show photo around that area i/o exact lon/lat...
         static let Page = "page" // for its value, we will assign a random page from view controller. The value is not a constant - &page=1& -> page=randomPage that will be assign @ VC.swift
         
     }

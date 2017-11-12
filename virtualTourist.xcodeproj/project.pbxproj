@@ -14,6 +14,7 @@
 		A00100B01F194B4B00F08F07 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A00100AE1F194B4B00F08F07 /* LaunchScreen.storyboard */; };
 		A00100BB1F194B4B00F08F07 /* virtualTouristTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00100BA1F194B4B00F08F07 /* virtualTouristTests.swift */; };
 		A00100C61F194B4C00F08F07 /* virtualTouristUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00100C51F194B4B00F08F07 /* virtualTouristUITests.swift */; };
+		A049DC6B1F93392100700350 /* FlickrNetworkCall.swift in Sources */ = {isa = PBXBuildFile; fileRef = A049DC6A1F93392100700350 /* FlickrNetworkCall.swift */; };
 		A0E219F71F33D6BC009D58B0 /* GCDBlackBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0E219F61F33D6BC009D58B0 /* GCDBlackBox.swift */; };
 		A0E219F91F33D740009D58B0 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0E219F81F33D740009D58B0 /* Constants.swift */; };
 		A0E219FC1F3E8926009D58B0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A0E219FA1F3E8926009D58B0 /* Model.xcdatamodeld */; };
@@ -55,8 +56,9 @@
 		A00100C11F194B4B00F08F07 /* virtualTouristUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = virtualTouristUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A00100C51F194B4B00F08F07 /* virtualTouristUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = virtualTouristUITests.swift; sourceTree = "<group>"; };
 		A00100C71F194B4C00F08F07 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A049DC6A1F93392100700350 /* FlickrNetworkCall.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = FlickrNetworkCall.swift; path = virtualTourist/FlickrNetworkCall.swift; sourceTree = "<group>"; };
 		A0E219F61F33D6BC009D58B0 /* GCDBlackBox.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GCDBlackBox.swift; sourceTree = "<group>"; };
-		A0E219F81F33D740009D58B0 /* Constants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		A0E219F81F33D740009D58B0 /* Constants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Constants.swift; path = virtualTourist/Constants.swift; sourceTree = "<group>"; };
 		A0E219FB1F3E8926009D58B0 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
 		A0E219FD1F414972009D58B0 /* Pin+CoreDataClass.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Pin+CoreDataClass.swift"; sourceTree = "<group>"; };
 		A0E219FE1F414972009D58B0 /* Pin+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Pin+CoreDataProperties.swift"; sourceTree = "<group>"; };
@@ -117,7 +119,6 @@
 				A0E21A051F417477009D58B0 /* Models */,
 				A00100A21F194B4B00F08F07 /* AppDelegate.swift */,
 				A00100A41F194B4B00F08F07 /* MapViewController.swift */,
-				A0E219F81F33D740009D58B0 /* Constants.swift */,
 				A0E219F61F33D6BC009D58B0 /* GCDBlackBox.swift */,
 				A00100A61F194B4B00F08F07 /* Main.storyboard */,
 				A00100AC1F194B4B00F08F07 /* Assets.xcassets */,
@@ -161,6 +162,8 @@
 				A0E21A001F414972009D58B0 /* Photo+CoreDataProperties.swift */,
 				A0E21A081F43C10D009D58B0 /* CoreDataStack.swift */,
 				A0E219FA1F3E8926009D58B0 /* Model.xcdatamodeld */,
+				A049DC6A1F93392100700350 /* FlickrNetworkCall.swift */,
+				A0E219F81F33D740009D58B0 /* Constants.swift */,
 			);
 			name = Models;
 			path = ..;
@@ -309,6 +312,7 @@
 				A0E21A011F414972009D58B0 /* Pin+CoreDataClass.swift in Sources */,
 				A0E21A041F414972009D58B0 /* Photo+CoreDataProperties.swift in Sources */,
 				A00100A31F194B4B00F08F07 /* AppDelegate.swift in Sources */,
+				A049DC6B1F93392100700350 /* FlickrNetworkCall.swift in Sources */,
 				A0E219FC1F3E8926009D58B0 /* Model.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

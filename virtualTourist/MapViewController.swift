@@ -9,6 +9,7 @@
 import UIKit
 import MapKit
 import CoreData
+import CoreLocation
 
 class MapViewController: UIViewController, MKMapViewDelegate {
     
@@ -98,7 +99,6 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
     
         self.mapView.delegate = self // self = MapViewController.swift -> since MapVC has "MKMapViewDelegate" -> self can call mapview's delegate func, now, assign property "mapView" this ability too (tableview has built-in, no need to do this part)
 
@@ -257,10 +257,10 @@ extension MapViewController {
         
         // call below at background -- UNCOMMENT THIS !!!
         // MARK - add func xxx here - to pass "touchMapCoordinate"'s Lat & Long to Flickr's getPhoto API call
-        // searchByCoordinate(lon, lat)
+        // searchByCoordinate(lon, lat)  // hardcode this searchByCoordinate(37.2542, 122.0396)  (Hakone garden)
         
         // MARK - trigger func to pass lon/ lat to CREATE INSTANCE of a PIN - also, call ".save" to save this PIN instance to CORE DATA !
-        createPinInstance(lon, lat)
+        createPinInstance(self.lon, self.lat)
         
         let annotation = MKPointAnnotation() // Pin
         annotation.coordinate = touchMapCoordinate
@@ -274,21 +274,21 @@ extension MapViewController {
         
     }
     
-    func searchByCoordinate(_ longitude: Double, _ latitude: Double) {
+    
+    func searchByCoordinate() {
         // call Flickr API here
-        // bbox (lon, lat)
+        // bbox (lat, lon)
         // return photos' data -> only get the photo's TOTAL PAGES, and pass it to another API call for THAT PAGE's photo data
         
         // 1. set methodparameters - now, add related constants to FlickrParameterKeys under Constants.swift
         let methodParameters = [
             Constants.FlickrParameterKeys.Method : Constants.FlickrParameterValues.SearchMethod,
             Constants.FlickrParameterKeys.APIKey : Constants.FlickrParameterValues.APIKey,
+            Constants.FlickrParameterKeys.BoundingBox : bboxString(),
             Constants.FlickrParameterKeys.SafeSearch : Constants.FlickrParameterValues.UseSafeSearch,
             Constants.FlickrParameterKeys.Extras : Constants.FlickrParameterValues.MediumURL,
             Constants.FlickrParameterKeys.Format : Constants.FlickrParameterValues.ResponseFormat,
-            Constants.FlickrParameterKeys.NoJsonCallback : Constants.FlickrParameterValues.DisableJSONCallback,
-            // Constants.FlickrParameterKeys.Page = random page??
-            // Constants.FlickrParameterKeys.BoundingBox : bboxString()
+            Constants.FlickrParameterKeys.NoJsonCallback : Constants.FlickrParameterValues.DisableJSONCallback
         ]
         
         /* 2. Call a helper func "getPhotoTotalPageFromFlickrBySearch" that handles 
@@ -296,27 +296,27 @@ extension MapViewController {
          B - the methodparameters to form something like this method=flickr.photos.search&api_key=3f8c7ede36 (add "=", "&" - to form a URL to input to step 3
          See below "2"
         */
-        getPhotoTotalPageFromFlickrBySearch(longitude, latitude, methodParameters as [String: AnyObject]) {
-            (totalPages /* completionhandler */ ) in
-            
-            // This block of code will run only when server returns TotalPagesNumber
-            // deal with the totalPages here....
-            
-            // CALL func "getPhotoFromFlickrBySearchWithRandomPage" - input the random pages in.
-            
-            
-        }
+        getPhotoTotalPageFromFlickrBySearch(methodParameters as [String: AnyObject])
         
+    }
+    
+    private func bboxString() -> String {
         
-        // 4. Photos data returned from step 3 - we need to save those photo to CoreData by creating NSManagedObject
+        // ASK MENTOR ?? do i still need to check if self.lon has something? but with i wrote if let latitude = self.lat -> it raised error...
         
-        
-        
+        // ensure bbox is bounded by min and max
+        let minimumLon = max(self.lon - Constants.Flickr.SearchBBoxHalfWidth, Constants.Flickr.SearchLonRange.0)
+        let minimumLat = max(self.lat - Constants.Flickr.SearchBBoxHalfHeight, Constants.Flickr.SearchLatRange.0)
+        let maximumLon = min(self.lon + Constants.Flickr.SearchBBoxHalfWidth, Constants.Flickr.SearchLonRange.1)
+        let maximumLat = min(self.lat + Constants.Flickr.SearchBBoxHalfHeight, Constants.Flickr.SearchLatRange.1)
+        return "\(minimumLon),\(minimumLat),\(maximumLon),\(maximumLat)"
     }
     
     // SHOULD MOVE ALL THESE NETWORK CALL AT ANOTHER FILE!
     // 2. This helper func to deal with step 2 above - to make a Networking call - to return Total Page No.
-    private func getPhotoTotalPageFromFlickrBySearch(_ longitude: Double, _ latitude: Double, _ methodParameters: [String: AnyObject], completionHandlerForTotalPages: @escaping (_ totalPages: Int) -> Void) {
+    private func getPhotoTotalPageFromFlickrBySearch(_ methodParameters: [String: AnyObject]) {
+        
+        // extract lon/ lat from self.lon/ self.lat
         
         // create session and request
         let session = URLSession.shared
@@ -324,17 +324,55 @@ extension MapViewController {
         let request = URLRequest(url: flickrURLFromParameters(methodParameters))
         
         // create network request - check Flickr's app for the codes
+        let task = session.dataTask(with: request) { (data, response, error) in
+            
+            // if an error occurs, print it and re-enable the UI
+            
+            if error != nil { // returned error is an NSerror, displayError expects String...
+                print(error)
+                // call displayError() -> expects String -> it shows alert box with string
+                self.displayError("There was an error with your request \(error?.localizedDescription)") // convert NSError to String with ".localizedDescription"
+                return // ask mentor ??? why do I need "return" -> my guess: return is to dismiss the alert box after showing?
+            } else { // no error
+                // nikki
+                
+                // this block will call network call and return total Pages
+                // grab how many photo pages there are - look at Flickr's project
+                // call getPhotoTotalPageFromFlickrBySearch()
+                // call getPhotoFromFlickrBySearchWithRandomPageNumber(methodParameters as [String: AnyObject], _ completionHandlerForgetPhotoFromRandomPage: @escaping (_ randomPageNo: ??) -> Void)
+                
+                // write a func getPhotoFromFlickrBySearchWithRandomPageNumber, inside it, call another network call - getPhotoTotalPageFromFlickrBySearch -> when this returns, I call "completionHandlerForgetPhotoFromRandomPage" and put the "random page" that is returned 
+                
+                // here this block, will also
+                
+                
+                
+                
+                
+                
+                
+                
+                // call func getPhotoTotalPageFromFlickrBySearchByRandomPage(methodPara, RandomPage)
+                // This block of code will run only when server returns TotalPagesNumber
+                // deal with the totalPages here....
+                
+                // CALL func "getPhotoFromFlickrBySearchWithRandomPage" - input the random pages in.
+                
+                // below should call func to input random page and return pic from that random page - func "getPhotoFromFlickrBySearchWithRandomPageNumber"
+                
+                // after "total pages" is returned, pass total page to func getPhotoFromFlickrBySearchWithRandomPage
+                //getPhotoFromFlickrBySearchWithRandomPage(randomPage)
+                
+
+                
+            }
+
         
-        
-        
-        
-        
-        
-        
-        // after "total pages" is returned, pass total page to func getPhotoFromFlickrBySearchWithRandomPage
-        //getPhotoFromFlickrBySearchWithRandomPage(randomPage)
-        
-    }
+            }// end of if error
+        } // end of let task =
+    } // end of private func getPhoto....
+    
+
     
     // MARK - call below func ONCE inside func "getPhotoTotalPageFromFlickrBySearch" & also when user tap "New Collection" - this func RETURNS ACTUAL PHOTO
     private func getPhotoFromFlickrBySearchWithRandomPageNumber(_ randomPage: Int){
@@ -358,6 +396,10 @@ extension MapViewController {
         // Make another network call, this time, search with the random number obtained from above
         
         
+        
+        // when random page pictures returned, save the Photo to CoreData - by creating Photo instance. Save Photo URL, title
+        
+        // 4. Photos data returned from step 3 - we need to save those photo to CoreData by creating NSManagedObject
     }
     
     // 3. Create a helper func make "url", so we can pass it to func "" inside the network call
@@ -385,17 +427,24 @@ extension MapViewController {
     }
     
     // CREATE a Pin Instance
-    private func createPinInstance(_ lon: Double, _ lat: Double) -> Void {
+    private func createPinInstance(_ lat: Double, _ lon: Double) -> Void {
         
         // Create a PIN instance
         // convenience init(latitude: Double, longitude: Double, context: NSManagedObjectContext) { from class PIN
         let newPin = Pin(latitude: lat, longitude: lon, context: stack.context)
+        print("newPin is \(newPin)")
+        
+        // call a func to call Flickr API to grab Photos associated with this new PIN..
+        
+        
+        
+        
         
         // there is no "save" function to be called YET - add it with do/ try/ catch block - to avoid FAILURE
         do {
             try stack.saveContext()
+            self.fetchAllPins()
             print("Successfully saved")
-            
         } catch {
             print("Saved failed")
         }
@@ -404,6 +453,9 @@ extension MapViewController {
  
         // if need to save i/s autosave, here is the place to call save() -> Ans: Mentor- autosave only neeed when app is handling large data continously.
     }
+    
+    // A Flickr API call to return Photos based on lat/ lon passed, when a new PIN is created.
+    
 } // END of extension MapViewController {
 
 /* Here we create an enum with associated values and constrained to a generic type, you probably heard about generics in Swift, but what are they? Generic programming is a way to write functions and data types while making minimal assumptions about the type of data being used, Swift generics create code that does not get specific about underlying data types, allowing for elegant abstractions that produce cleaner code with fewer bugs! 
@@ -443,10 +495,34 @@ enum Result <T>{
 // refresh collection view/ add collection view
 // delete all data, and call func of calling flicker API, reload data, refresh data
 
-
-
-
-
+// MARK: - MapViewController - Configure UI
+private extension MapViewController {
+    
+    // pass error to this func - either it's self made up or error passed from the server through .dataTask
+    func displayError(_ errorString: String?) {
+        if let errorString = errorString { // unwrap the value of errorString
+            
+            // set UI alertVC
+            let errorAlert = UIAlertController(title: "Failure", message: errorString, preferredStyle: UIAlertControllerStyle.alert)
+            errorAlert.addAction(UIAlertAction(title: "OK", style: .default, handler: { (action: UIAlertAction!) in
+                // what happens when user clicks ok? Ans: to dismiss the alert box
+                errorAlert.dismiss(animated: true, completion: nil)
+            }))
+            
+            // need to call alert to present @ main queue
+            performUIUpdatesOnMan {
+                self.present(errorAlert, animated: true, completion: nil) //  have to place any interface code on mainQueue
+            }
+        } //END of if let errorString
+    } // END of func displayError
+    
+    // nikki's // call below API starts calling Flickr server and update it to false by hideAI(false) when photos returned
+    // Configure hidding the activity indicator
+    func hideAI(_ enabled: Bool) -> Void {
+        
+    }
+    
+} // END of private extension MapViewController
 
 
 
