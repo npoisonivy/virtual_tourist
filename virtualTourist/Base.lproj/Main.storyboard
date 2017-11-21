@@ -36,16 +36,17 @@
                     </view>
                     <connections>
                         <outlet property="mapView" destination="Djb-Wq-aZx" id="ecQ-IG-6rY"/>
+                        <segue destination="esa-0q-MS5" kind="show" id="jwy-if-tCK"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="1024.8" y="125.4872563718141"/>
         </scene>
-        <!--View Controller-->
+        <!--Photo Album View Controller-->
         <scene sceneID="rGn-ca-BsH">
             <objects>
-                <viewController id="esa-0q-MS5" sceneMemberID="viewController">
+                <viewController id="esa-0q-MS5" customClass="PhotoAlbumViewController" customModule="virtualTourist" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="k6T-Uv-Lcz"/>
                         <viewControllerLayoutGuide type="bottom" id="MML-8q-H0b"/>
@@ -68,10 +69,6 @@
                                     <size key="footerReferenceSize" width="0.0" height="0.0"/>
                                     <inset key="sectionInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
                                 </collectionViewFlowLayout>
-                                <activityIndicatorView key="backgroundView" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="gray" id="eJb-7o-3Fn">
-                                    <rect key="frame" x="0.0" y="0.0" width="375" height="355"/>
-                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                </activityIndicatorView>
                                 <cells>
                                     <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" id="0xe-Zv-EIq">
                                         <rect key="frame" x="0.0" y="0.0" width="50" height="50"/>
@@ -86,15 +83,32 @@
                             <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="kHU-sm-mdd">
                                 <rect key="frame" x="0.0" y="616" width="375" height="43"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <state key="normal" title="Button"/>
+                                <state key="normal" title="New Collection"/>
+                                <connections>
+                                    <action selector="newCollection:" destination="esa-0q-MS5" eventType="touchUpInside" id="670-0F-ll3"/>
+                                </connections>
                             </button>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="No Images" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="qP3-Sa-zop">
+                                <rect key="frame" x="146.5" y="323.5" width="82" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="qP3-Sa-zop" firstAttribute="centerX" secondItem="Dyi-Yj-aXz" secondAttribute="centerX" id="EO2-ar-yRa"/>
+                            <constraint firstItem="qP3-Sa-zop" firstAttribute="centerY" secondItem="Dyi-Yj-aXz" secondAttribute="centerY" id="esO-xE-j5y"/>
+                        </constraints>
                     </view>
+                    <connections>
+                        <outlet property="newCollection" destination="kHU-sm-mdd" id="ilX-G3-Mji"/>
+                        <outlet property="noPhotoLabel" destination="qP3-Sa-zop" id="LWd-b3-Oy9"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="wZF-Vy-t9Y" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="1682.4000000000001" y="137.18140929535232"/>
+            <point key="canvasLocation" x="1761" y="134"/>
         </scene>
     </scenes>
 </document>

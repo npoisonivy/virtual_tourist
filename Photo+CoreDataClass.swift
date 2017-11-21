@@ -18,7 +18,7 @@ public class Photo: NSManagedObject { // Photo is a child class of NSManagedObje
     // MARK - Initializer - create new instance of Photo
     /* ??? am i missing the text input ?? - ask mentor .. i don't add text because "Photo" do not have property "text"...
     convenience init(text: String = "New Note", context: NSManagedObjectContext) */
-    convenience init(mediaURL: String, imageData: NSData, photoName: String, context: NSManagedObjectContext) {
+    convenience init(mediaURL: String, photoName: String, context: NSManagedObjectContext) {
         // NSManagedObjectContext - a managed object belongs to, monitors this managed object for changes.
         // 1. create an instance of NSEntityDescription class - we pass the name of entity that we want to create a MANAGED OBJECT for, "Photo", and also pass an context (=NSManagedObjectContext) instance --> this tells Core Data where to find the data model for this entity - "Photo"
         // a managed object context is tied to a persistent store coordinator and a persistent store coordinator keeps a reference to a data model. When we pass in a managed object context, Core Data asks its persistent store coordinator for its data model to find the entity we're looking for.
@@ -30,7 +30,7 @@ public class Photo: NSManagedObject { // Photo is a child class of NSManagedObje
             // does this look alright ? ask Mentor!
             self.creationDate = Date() // Date"()" - auto created date upon Photo creation
             self.mediaURL = mediaURL
-            self.imageData = imageData // when ManageObject of Photo is initialized - i may not have imageData ready , how should I write this? -> ?? self.imageData = "NSData()" ??? mentor 
+            // self.imageData = imageData // when ManageObject of Photo is initialized - i may not have imageData ready , how should I write this? -> ?? self.imageData = "NSData()" ??? mentor - her ans: remove this as I was right, it wasn't ready @ inti, so we don't need it here.
             self.photoName = photoName
         } else {
             fatalError("Unable to find Entity name!")

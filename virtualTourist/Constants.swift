@@ -46,16 +46,28 @@ struct Constants {
     
     struct FlickrParameterValues {
         static let SearchMethod = "flickr.photos.search"
-        static let APIKey = "......"
+        static let APIKey = "de81659817b7cef439bb69480279b510"
         static let UseSafeSearch = "1"
         static let MediumURL = "url_m" // value of key extras
         static let ResponseFormat = "json" // format=json
         static let DisableJSONCallback = "1" // nojsoncallback=1
     }
     
+    // MARK: Flickr Response Keys
+    struct FlickrResponseKeys {
+        static let Status = "stat"
+        static let Photos = "photos"
+        static let Photo = "photo"
+        static let Title = "title"
+        static let MediumURL = "url_m"
+        static let Pages = "pages"
+        static let Total = "total"
+    }
     
-    
-    
+    // MARK: Flickr Response Values
+    struct FlickrResponseValues {
+        static let OKStatus = "ok"
+    }
 }
 
 

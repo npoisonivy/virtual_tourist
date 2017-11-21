@@ -21,6 +21,78 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     
     let stack = CoreDataStack(modelName: "Model")!
     
+    override func viewWillAppear(_ animated: Bool) { // ask mentor??? do i need to keep this "_ animated: Bool? - Nikki: I think we should?
+        FlickrConvenience.sharedInstance().totalPages = nil
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        self.mapView.delegate = self // self = MapViewController.swift -> since MapVC has "MKMapViewDelegate" -> self can call mapview's delegate func, now, assign property "mapView" this ability too (tableview has built-in, no need to do this part)
+        
+        // Mentor advises me to read more about tap/ other geseture recognizzer!
+        // MARK - Create UILongPressGestureRecognizer
+        let longPressRecogniser = UILongPressGestureRecognizer(target: self, action: #selector(MapViewController.handleLongPress(_:)))
+        longPressRecogniser.minimumPressDuration = 1.0
+        mapView.addGestureRecognizer(longPressRecogniser) // registered -> call .handleLongPress when user perform the action
+        
+        // change (VAR) properties of zoom level - use mapviewdelegate func -> detecting pinching motion - when REGION of the map is changed.
+        // (VAR) center of the map - depends on where the pin is at -> "span" around
+        // access to self.lon & self.lat - this is diff than lon/ lat from <#T##centerCoordinate: CLLocationCoordinate2D##CLLocationCoordinate2D#>, right??? ask mentor!
+        
+        // should retrieve "savedMapRegion" to display zoom level
+        // 0. get the value of pre-set "regionToSave"
+        // 1. convert elements from key "savedMapRegion" (array)
+        // 2. call this to display zoom level - mapView.region = MKCoordinateRegionMake(<#T##centerCoordinate: CLLocationCoordinate2D##CLLocationCoordinate2D#>, <#T##span: MKCoordinateSpan##MKCoordinateSpan#>)
+        
+        // when viewDidLoad - only 2 scenerios - A. 1st launch, so i need to retrieve what was saved to "savedMapRegion" B. not 1st lauch, that will be taken care of , as new value has already been set!
+        
+        // 0. get the value of pre-set "regionToSave" @ AppDelegate.swift
+        if let savedRegion = UserDefaults.standard.object(forKey: "savedMapRegion") as? [String: Double] {
+            // 1. convert elements from key "savedMapRegion" (array)
+            let center = CLLocationCoordinate2D(latitude: savedRegion["mapRegionLat"]! , longitude: savedRegion["mapRegionLon"]!)
+            let span = MKCoordinateSpan(latitudeDelta: savedRegion["latDelta"]! , longitudeDelta: savedRegion["lonDelta"]!)
+            
+            // 2. mapView.region = MKCoordinateRegionMake(<#T##centerCoordinate: CLLocationCoordinate2D##CLLocationCoordinate2D#>, <#T##span: MKCoordinateSpan##MKCoordinateSpan#>)
+            // mapView.region = MKCoordinateRegionMake(CLLocationCoordinate2D(latitude: savedRegion["mapRegionLat"]! , longitude: savedRegion["mapRegionLon"]!), MKCoordinateSpan(latitudeDelta: savedRegion["latDelta"]! , longitudeDelta: savedRegion["lonDelta"]!))
+            mapView.region = MKCoordinateRegionMake(center, span)
+            print("current display is from array of savedRegion... \(savedRegion)")
+            // above code works!
+            
+            /* OR:
+             let CoordinateRegion = MKCoordinateRegionMake(center, span)
+             // mapView.setRegion(region: MKCoordinateRegion, animated: <#T##Bool#>)
+             mapView.setRegion(CoordinateRegion, animated: true)
+             // setRegion - Changes the currently visible region and optionally animates the change.
+             // above code works too! */
+            
+        } // END of "if let savedRegion =" - if let for: make sure "savedRegion" != nil
+        
+        
+        // MARK - fetch from coredata what user has dropped (get the pin info) -> and add it to the mapview after user returns to the app.
+        let allPins = fetchAllPins() as [Pin]! // this returns all pins saved to entity Pin... I want to retrieve all pins and then drop pin added to the map
+        
+        // add "if let" OR add "!" after [Pin] (ask MENTOR ???) to UNWRAP the optional pin value! - because returns type from fetchAllPins is - [Pin]? -> "?" = optional -
+        
+        var annotations = [MKPointAnnotation]() // create an array to store all pins' coordinate
+        
+        // use for loop to keep adding each annotation to mapView ?!
+        // class Pin has latitude & longitude
+        
+        for pin in allPins! {
+            let long = pin.longitude as Double
+            let lat = pin.latitude as Double
+            
+            let coordinates = CLLocationCoordinate2D(latitude: lat, longitude: long)
+            let annotation = MKPointAnnotation()
+            // convert latitude / longitude to MKPointAnnotation()   -> we need to do CLLocationCoordinate2D(latitude: lat, longitude: long
+            annotation.coordinate = coordinates
+            annotations.append(annotation)
+        }
+        mapView.addAnnotations(annotations) // most efficient way to add pins/ annotations on map - one time
+        
+    }
+    
     // Part 1 - MARK - Properties
     // this NSFetchedResultsController works with UI collection view and table view.
     // <NSFetchRequestResult> is the result type
@@ -95,77 +167,6 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         fetchedResultsController = fc
     }
     */
-    
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-    
-        self.mapView.delegate = self // self = MapViewController.swift -> since MapVC has "MKMapViewDelegate" -> self can call mapview's delegate func, now, assign property "mapView" this ability too (tableview has built-in, no need to do this part)
-
-        // Mentor advises me to read more about tap/ other geseture recognizzer!
-        // MARK - Create UILongPressGestureRecognizer
-        let longPressRecogniser = UILongPressGestureRecognizer(target: self, action: #selector(MapViewController.handleLongPress(_:)))
-        longPressRecogniser.minimumPressDuration = 1.0
-        mapView.addGestureRecognizer(longPressRecogniser) // registered -> call .handleLongPress when user perform the action
-
-        // change (VAR) properties of zoom level - use mapviewdelegate func -> detecting pinching motion - when REGION of the map is changed.
-        // (VAR) center of the map - depends on where the pin is at -> "span" around
-        // access to self.lon & self.lat - this is diff than lon/ lat from <#T##centerCoordinate: CLLocationCoordinate2D##CLLocationCoordinate2D#>, right??? ask mentor!
-        
-        // should retrieve "savedMapRegion" to display zoom level
-        // 0. get the value of pre-set "regionToSave"
-        // 1. convert elements from key "savedMapRegion" (array)
-        // 2. call this to display zoom level - mapView.region = MKCoordinateRegionMake(<#T##centerCoordinate: CLLocationCoordinate2D##CLLocationCoordinate2D#>, <#T##span: MKCoordinateSpan##MKCoordinateSpan#>)
-        
-        // when viewDidLoad - only 2 scenerios - A. 1st launch, so i need to retrieve what was saved to "savedMapRegion" B. not 1st lauch, that will be taken care of , as new value has already been set!
-    
-        // 0. get the value of pre-set "regionToSave" @ AppDelegate.swift
-        if let savedRegion = UserDefaults.standard.object(forKey: "savedMapRegion") as? [String: Double] {
-            // 1. convert elements from key "savedMapRegion" (array)
-            let center = CLLocationCoordinate2D(latitude: savedRegion["mapRegionLat"]! , longitude: savedRegion["mapRegionLon"]!)
-            let span = MKCoordinateSpan(latitudeDelta: savedRegion["latDelta"]! , longitudeDelta: savedRegion["lonDelta"]!)
-            
-            // 2. mapView.region = MKCoordinateRegionMake(<#T##centerCoordinate: CLLocationCoordinate2D##CLLocationCoordinate2D#>, <#T##span: MKCoordinateSpan##MKCoordinateSpan#>)
-            // mapView.region = MKCoordinateRegionMake(CLLocationCoordinate2D(latitude: savedRegion["mapRegionLat"]! , longitude: savedRegion["mapRegionLon"]!), MKCoordinateSpan(latitudeDelta: savedRegion["latDelta"]! , longitudeDelta: savedRegion["lonDelta"]!))
-            mapView.region = MKCoordinateRegionMake(center, span)
-            print("current display is from array of savedRegion... \(savedRegion)")
-            // above code works!
-            
-            /* OR:
-            let CoordinateRegion = MKCoordinateRegionMake(center, span)
-            // mapView.setRegion(region: MKCoordinateRegion, animated: <#T##Bool#>)
-            mapView.setRegion(CoordinateRegion, animated: true)
-            // setRegion - Changes the currently visible region and optionally animates the change.
-            // above code works too! */
-            
-        } // END of "if let savedRegion =" - if let for: make sure "savedRegion" != nil
-        
-  
-        // MARK - fetch from coredata what user has dropped (get the pin info) -> and add it to the mapview after user returns to the app.
-        let allPins = fetchAllPins() as [Pin]! // this returns all pins saved to entity Pin... I want to retrieve all pins and then drop pin added to the map
-        
-        // add "if let" OR add "!" after [Pin] (ask MENTOR ???) to UNWRAP the optional pin value! - because returns type from fetchAllPins is - [Pin]? -> "?" = optional -
-        
-        var annotations = [MKPointAnnotation]() // create an array to store all pins' coordinate
-        
-        // use for loop to keep adding each annotation to mapView ?!
-        // class Pin has latitude & longitude
-        
-        for pin in allPins! {
-            let long = pin.longitude as Double
-            let lat = pin.latitude as Double
-            
-            let coordinates = CLLocationCoordinate2D(latitude: lat, longitude: long)
-            let annotation = MKPointAnnotation()
-            // convert latitude / longitude to MKPointAnnotation()   -> we need to do CLLocationCoordinate2D(latitude: lat, longitude: long
-            annotation.coordinate = coordinates
-            annotations.append(annotation)
-        }
-        mapView.addAnnotations(annotations) // most efficient way to add pins/ annotations on map - one time
-
-    }
-    
-  
     
     // MARK: - MKMapViewDelegate - Calling its func here ...
     
@@ -296,7 +297,10 @@ extension MapViewController {
          B - the methodparameters to form something like this method=flickr.photos.search&api_key=3f8c7ede36 (add "=", "&" - to form a URL to input to step 3
          See below "2"
         */
-        getPhotoTotalPageFromFlickrBySearch(methodParameters as [String: AnyObject])
+        
+        // Nikki: call display getPhotoFromFlickrBySearchWithRandomPageNumber where returns "PhotoArray" back to compleiton handler
+        
+        // not this - getPhotoTotalPageFromFlickrBySearch(methodParameters as [String: AnyObject])
         
     }
     
@@ -311,121 +315,7 @@ extension MapViewController {
         let maximumLat = min(self.lat + Constants.Flickr.SearchBBoxHalfHeight, Constants.Flickr.SearchLatRange.1)
         return "\(minimumLon),\(minimumLat),\(maximumLon),\(maximumLat)"
     }
-    
-    // SHOULD MOVE ALL THESE NETWORK CALL AT ANOTHER FILE!
-    // 2. This helper func to deal with step 2 above - to make a Networking call - to return Total Page No.
-    private func getPhotoTotalPageFromFlickrBySearch(_ methodParameters: [String: AnyObject]) {
-        
-        // extract lon/ lat from self.lon/ self.lat
-        
-        // create session and request
-        let session = URLSession.shared
-        // 3. call a helper func to pass "url" as input to make the network call
-        let request = URLRequest(url: flickrURLFromParameters(methodParameters))
-        
-        // create network request - check Flickr's app for the codes
-        let task = session.dataTask(with: request) { (data, response, error) in
-            
-            // if an error occurs, print it and re-enable the UI
-            
-            if error != nil { // returned error is an NSerror, displayError expects String...
-                print(error)
-                // call displayError() -> expects String -> it shows alert box with string
-                self.displayError("There was an error with your request \(error?.localizedDescription)") // convert NSError to String with ".localizedDescription"
-                return // ask mentor ??? why do I need "return" -> my guess: return is to dismiss the alert box after showing?
-            } else { // no error
-                // nikki
-                
-                // this block will call network call and return total Pages
-                // grab how many photo pages there are - look at Flickr's project
-                // call getPhotoTotalPageFromFlickrBySearch()
-                // call getPhotoFromFlickrBySearchWithRandomPageNumber(methodParameters as [String: AnyObject], _ completionHandlerForgetPhotoFromRandomPage: @escaping (_ randomPageNo: ??) -> Void)
-                
-                // write a func getPhotoFromFlickrBySearchWithRandomPageNumber, inside it, call another network call - getPhotoTotalPageFromFlickrBySearch -> when this returns, I call "completionHandlerForgetPhotoFromRandomPage" and put the "random page" that is returned 
-                
-                // here this block, will also
-                
-                
-                
-                
-                
-                
-                
-                
-                // call func getPhotoTotalPageFromFlickrBySearchByRandomPage(methodPara, RandomPage)
-                // This block of code will run only when server returns TotalPagesNumber
-                // deal with the totalPages here....
-                
-                // CALL func "getPhotoFromFlickrBySearchWithRandomPage" - input the random pages in.
-                
-                // below should call func to input random page and return pic from that random page - func "getPhotoFromFlickrBySearchWithRandomPageNumber"
-                
-                // after "total pages" is returned, pass total page to func getPhotoFromFlickrBySearchWithRandomPage
-                //getPhotoFromFlickrBySearchWithRandomPage(randomPage)
-                
 
-                
-            }
-
-        
-            }// end of if error
-        } // end of let task =
-    } // end of private func getPhoto....
-    
-
-    
-    // MARK - call below func ONCE inside func "getPhotoTotalPageFromFlickrBySearch" & also when user tap "New Collection" - this func RETURNS ACTUAL PHOTO
-    private func getPhotoFromFlickrBySearchWithRandomPageNumber(_ randomPage: Int){
-        // pick a random page to query !
-        // let pageLimit = min(total)
-        
-        // add Page to parameter...
-        let methodParameters = [
-            Constants.FlickrParameterKeys.Method : Constants.FlickrParameterValues.SearchMethod,
-            Constants.FlickrParameterKeys.APIKey : Constants.FlickrParameterValues.APIKey,
-            Constants.FlickrParameterKeys.SafeSearch : Constants.FlickrParameterValues.UseSafeSearch,
-            Constants.FlickrParameterKeys.Extras : Constants.FlickrParameterValues.MediumURL,
-            Constants.FlickrParameterKeys.Format : Constants.FlickrParameterValues.ResponseFormat,
-            Constants.FlickrParameterKeys.NoJsonCallback : Constants.FlickrParameterValues.DisableJSONCallback,
-            // Constants.FlickrParameterKeys.Page = random page??
-    
-        ]
-
-        
-        
-        // Make another network call, this time, search with the random number obtained from above
-        
-        
-        
-        // when random page pictures returned, save the Photo to CoreData - by creating Photo instance. Save Photo URL, title
-        
-        // 4. Photos data returned from step 3 - we need to save those photo to CoreData by creating NSManagedObject
-    }
-    
-    // 3. Create a helper func make "url", so we can pass it to func "" inside the network call
-    private func flickrURLFromParameters(_ parameters: [String:AnyObject]) -> URL {
-        
-        var components = URLComponents()
-        components.scheme = Constants.Flickr.APIScheme
-        components.host = Constants.Flickr.APIHost
-        components.path = Constants.Flickr.APIPath
-        /* Above already add .scheme/ .host/ .path these properties to components 
-         to form -> https://api.flickr.com/services/rest/? */
-        
-        components.queryItems = [URLQueryItem]() // declare a property queryItems and create an array for it, so we can start adding DICT key:value to this array. This array datatype is URLQueryItem (= A single name-value pair)
-
-        for (key, value) in parameters {
-            // CONVERT parameter's dictionary to TYPE queryItem's dictionary
-            let queryItem = URLQueryItem(name: key, value: "\(value)")
-            
-            // APPEND EACH pair of queryItem's dictionary to array [components.queryItems]
-            components.queryItems!.append(queryItem)
-        }
-        
-        return components.url! // includes components's scheme, host, path, and dictionary from "parameters"
-        
-    }
-    
     // CREATE a Pin Instance
     private func createPinInstance(_ lat: Double, _ lon: Double) -> Void {
         
@@ -436,14 +326,11 @@ extension MapViewController {
         
         // call a func to call Flickr API to grab Photos associated with this new PIN..
         
-        
-        
-        
-        
+       
         // there is no "save" function to be called YET - add it with do/ try/ catch block - to avoid FAILURE
         do {
             try stack.saveContext()
-            self.fetchAllPins()
+            self.fetchAllPins()  // ??? do we really need it here ??? or just for debugging purpose? we already call this to display pins
             print("Successfully saved")
         } catch {
             print("Saved failed")
@@ -452,8 +339,17 @@ extension MapViewController {
         print("newPin is, \(newPin)")
  
         // if need to save i/s autosave, here is the place to call save() -> Ans: Mentor- autosave only neeed when app is handling large data continously.
-    }
+    } // END of private func createPinInstance
     
+    // ??? Thinking about calling it here @ mapViewController, so that createPhoto is here at the same placae as createPIN - so we know which pin to append this photo???
+    private func createPhotoInstance(){
+        FlickrConvenience.getPhotoArrayByRandPage() {(photosArray, error) in
+        // in order to call controller's func - example:UdacityClient.sharedInstance().submitStudentLoc() {(success, error) in
+            
+            
+        }
+    }
+
     // A Flickr API call to return Photos based on lat/ lon passed, when a new PIN is created.
     
 } // END of extension MapViewController {
@@ -499,6 +395,8 @@ enum Result <T>{
 private extension MapViewController {
     
     // pass error to this func - either it's self made up or error passed from the server through .dataTask
+    
+    // nikki - app specific - display label "No photo returned" when no photo is returned - don't use Alert Box!!
     func displayError(_ errorString: String?) {
         if let errorString = errorString { // unwrap the value of errorString
             
@@ -515,12 +413,6 @@ private extension MapViewController {
             }
         } //END of if let errorString
     } // END of func displayError
-    
-    // nikki's // call below API starts calling Flickr server and update it to false by hideAI(false) when photos returned
-    // Configure hidding the activity indicator
-    func hideAI(_ enabled: Bool) -> Void {
-        
-    }
     
 } // END of private extension MapViewController
 
