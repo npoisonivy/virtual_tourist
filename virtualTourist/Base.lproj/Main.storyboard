@@ -13,7 +13,7 @@
         <!--MapViewController-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController id="BYZ-38-t0r" userLabel="MapViewController" customClass="MapViewController" customModule="virtualTourist" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="MapVC" id="BYZ-38-t0r" userLabel="MapViewController" customClass="MapViewController" customModule="virtualTourist" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
                         <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
@@ -36,17 +36,17 @@
                     </view>
                     <connections>
                         <outlet property="mapView" destination="Djb-Wq-aZx" id="ecQ-IG-6rY"/>
-                        <segue destination="esa-0q-MS5" kind="show" id="jwy-if-tCK"/>
+                        <segue destination="esa-0q-MS5" kind="show" identifier="PhotoAlbumVC" id="jwy-if-tCK"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="1024.8" y="125.4872563718141"/>
         </scene>
-        <!--Photo Album View Controller-->
+        <!--PhotoAlbumViewController-->
         <scene sceneID="rGn-ca-BsH">
             <objects>
-                <viewController id="esa-0q-MS5" customClass="PhotoAlbumViewController" customModule="virtualTourist" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="PhotoAlbumVC" title="PhotoAlbumViewController" id="esa-0q-MS5" customClass="PhotoAlbumViewController" customModule="virtualTourist" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="k6T-Uv-Lcz"/>
                         <viewControllerLayoutGuide type="bottom" id="MML-8q-H0b"/>

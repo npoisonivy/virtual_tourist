@@ -4,7 +4,6 @@
 //
 //  Created by Nikki L on 7/14/17.
 //  Copyright © 2017 Nikki. All rights reserved.
-//
 
 import UIKit
 import MapKit
@@ -15,14 +14,23 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     
     @IBOutlet weak var mapView: MKMapView! // it does not have MKMapViewDelegate till adding "self.mapView.delegate = self  // self = MapVC.swift"
     
-    var annotations = [MKPointAnnotation]() // store all annotations/ pin locations from the mapView
+    var annotations = [MKPointAnnotation]() // store all annotations/ pin locations frovarhe mapView
     var lat: Double = 0.0
     var lon: Double = 0.0
     
     let stack = CoreDataStack(modelName: "Model")!
     
+    var currentPinObject:Pin? //  Error raised if -> var currentPinObject = Pin
+    
     override func viewWillAppear(_ animated: Bool) { // ask mentor??? do i need to keep this "_ animated: Bool? - Nikki: I think we should?
+      super.viewWillAppear(animated)
         FlickrConvenience.sharedInstance().totalPages = nil
+        
+        
+        
+        // add all the pins from Core Data
+        displayAllAnnotationsFromCoreData()
+        
     }
     
     override func viewDidLoad() {
@@ -52,6 +60,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
             // 1. convert elements from key "savedMapRegion" (array)
             let center = CLLocationCoordinate2D(latitude: savedRegion["mapRegionLat"]! , longitude: savedRegion["mapRegionLon"]!)
             let span = MKCoordinateSpan(latitudeDelta: savedRegion["latDelta"]! , longitudeDelta: savedRegion["lonDelta"]!)
+            print("span is \(span.latitudeDelta) & \(span.longitudeDelta)")
             
             // 2. mapView.region = MKCoordinateRegionMake(<#T##centerCoordinate: CLLocationCoordinate2D##CLLocationCoordinate2D#>, <#T##span: MKCoordinateSpan##MKCoordinateSpan#>)
             // mapView.region = MKCoordinateRegionMake(CLLocationCoordinate2D(latitude: savedRegion["mapRegionLat"]! , longitude: savedRegion["mapRegionLon"]!), MKCoordinateSpan(latitudeDelta: savedRegion["latDelta"]! , longitudeDelta: savedRegion["lonDelta"]!))
@@ -68,30 +77,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
             
         } // END of "if let savedRegion =" - if let for: make sure "savedRegion" != nil
         
-        
-        // MARK - fetch from coredata what user has dropped (get the pin info) -> and add it to the mapview after user returns to the app.
-        let allPins = fetchAllPins() as [Pin]! // this returns all pins saved to entity Pin... I want to retrieve all pins and then drop pin added to the map
-        
-        // add "if let" OR add "!" after [Pin] (ask MENTOR ???) to UNWRAP the optional pin value! - because returns type from fetchAllPins is - [Pin]? -> "?" = optional -
-        
-        var annotations = [MKPointAnnotation]() // create an array to store all pins' coordinate
-        
-        // use for loop to keep adding each annotation to mapView ?!
-        // class Pin has latitude & longitude
-        
-        for pin in allPins! {
-            let long = pin.longitude as Double
-            let lat = pin.latitude as Double
-            
-            let coordinates = CLLocationCoordinate2D(latitude: lat, longitude: long)
-            let annotation = MKPointAnnotation()
-            // convert latitude / longitude to MKPointAnnotation()   -> we need to do CLLocationCoordinate2D(latitude: lat, longitude: long
-            annotation.coordinate = coordinates
-            annotations.append(annotation)
-        }
-        mapView.addAnnotations(annotations) // most efficient way to add pins/ annotations on map - one time
-        
-    }
+    } // END of viewDidLoad()
     
     // Part 1 - MARK - Properties
     // this NSFetchedResultsController works with UI collection view and table view.
@@ -150,7 +136,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
             // we set let stack = CoreDataStack -> inside CoreDataStack is let context: NSManagedObjectContext -> so we call stack.context.fetch -> and inside "context" (=open class NSManagedObjectContext ) -> it has func "fetch" -> so, context.fetch
             // template: let fetchedResults = try managedObjectContext!.fetch(fetchRequest)
             let fetchedResults = try stack.context.fetch(fetchRequest) as [Pin] // right side returns [Pin]
-            print(fetchedResults)
+            print("AllPins are... \(fetchedResults.count), \(fetchedResults) ")
             return fetchedResults
             
         } catch let error as NSError {
@@ -241,10 +227,148 @@ class MapViewController: UIViewController, MKMapViewDelegate {
             /* this func should not be called UNLESS user change the region - BUT looks like when app first launch - the map is loaded -> that somehow triggers CHANGE in region. -> we can fix it by writing another func to ensure this func is ONLY called when a user did move the map and triggers CHANGE in region! */
             print("Region is changed due to user's interaction, new value updated to \(UserDefaults.standard.object(forKey: "savedMapRegion"))")
         }
+    } // END of func mapView - regionDidChangeAnimated
+    
+    // MARK - get Current tapped/ selected Pin on the map
+    
+    
+    
+    
+    // Overall - declare @ beginning of the file, MKMapViewDelegate -> use didSelect to get what pin is selected -> set NSPredicate as a condition to find this selected pin -> init fetchRequest for Pin and add pred to this fetchRequest -> this finds this selected pin through the Core Data Model object -> and return a fetchResult -> if found -> return a Pin Object
+    
+    // Step 1 - MKPointAnnotation -> Latitude and longitude -> NSPredicate -> Pin -> PhotoAlbumViewController
+    // use MKMapViewDelegate's didselect function to get the chosen pin's Lat/ Lon -> use NSPredicate to check if this pin is in the Core Data. And pass Pin object to PhotoViewController
+    
+    // MARK - Enable mapView's clickability
+//    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+//        let a
+//        
+//    }
+//    
+    
+    // Currently, pins are shown on map, but not able to be tapped
+    // OS level detect when a pin is selected, trigger below func
+    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+        
+        // open PhotoAlbumView + prepare + perform sergue
+        if control == view.rightCalloutAccessoryView {
+            let app = UIApplication.shared
+            
+            // what to expect??
+            // open PhotoAlbumView... - but need to pass FOUND pin pobject, how can I enable pin being tappable. and send ?
+            
+            
+            
+        }
+  
+        
+        print("User selected a Pin")
+        
+        if let selectedCoordinate = view.annotation?.coordinate { // the annotation that triggers "didSelect" on the UI view
+            // Write the predicate for Double for CoreData entity - value: %lf - long float
+            
+            let pred = NSPredicate(format: "latitude = %lf AND longitude = %lf", selectedCoordinate.latitude, selectedCoordinate.longitude)
+            
+            // pred is a condition - use this NSPredicate, we need to create a fetchResult
+            // fetchRequest has a predicate property, so we add that property now
+            
+            // will return the PIN object
+        
+            //1. create NSFetchRequest for Pin entity
+            let fetchRequest = NSFetchRequest<Pin>(entityName: "Pin") // <Pin> -> "public class Pin: NSManagedObject" - and since .fetch(expecting: NSFetchRequest  type, so we set fetchRequest = NSFetchRequest<Pin>
+            do {
+                // Look through Pin Object against those in Core Data for a match?
+                // Find a PIN match in CoreData (it should because Pin Instance is created already) -> return its object...
+                fetchRequest.predicate = pred // condition
+                //2. Use context to fetch the data using NSFetchRequest - //stack.context.fetch .
+                // we set let stack = CoreDataStack -> inside CoreDataStack is let context: NSManagedObjectContext -> so we call stack.context.fetch -> and inside "context" (=open class NSManagedObjectContext ) -> it has func "fetch" -> so, context.fetch
+                // template: let fetchedResults = try managedObjectContext!.fetch(fetchRequest)
+                let fetchedResults = try stack.context.fetch(fetchRequest) as [Pin] // right side returns array [Pin], since there is only one pin should be found, grab the pos[0]
+                print(fetchedResults)
+                self.currentPinObject = fetchedResults[0]
+               
+                print("matching Pin is, \(self.currentPinObject)")
+                
+            } catch let error as NSError {
+                print("error from currentPin is \(error)")
+            }
+            
+            // pass this currentPinObject to PhotoAlbumViewController
+            self.performSegue(withIdentifier: "PhotoAlbumVC", sender: self)
+            // how to pass this pin object to the PhotoAlbumViewController? Ans: by prepare for segue!
+            
+        } // END of if let selectedCoordinate
+        
+        // let context = self.stack.
+        
+        // do i need to care about calling this mainQueue or not??? ask mentor???
+         // .mainQueueConcurrencyType)
+        
+        
+    } // END of func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView)
+    
+    // first, prepareForSegue > second, performSegue
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        
+        let nextController = segue.destination as! PhotoAlbumViewController
+        nextController.currentPinObject = self.currentPinObject
+        
     }
+    
+    
+    
+    
+    
+    // Step 2.1 - pass Pin object and Stack from mapvc -> photalbumvc -> flickrconveneince.
+    // Step 2.2 - perform segue under didSelect func - performSegue(withIdentifier: "PhotoAlbumVC", sender: self)
+    
+
+    
+    
+    
+    
 }
 
 extension MapViewController {
+    
+    func displayAllAnnotationsFromCoreData() -> Void {
+        
+        // Get mapView all annotations & remove them all from previous
+        let allAnnotations = self.mapView.annotations
+        self.mapView.removeAnnotations(allAnnotations)
+        
+        // MARK - fetch from coredata what user has dropped (get the pin info) -> and add it to the mapview after user returns to the app.
+        
+        let allPins = fetchAllPins() as [Pin]! // this returns all pins saved to entity Pin... I want to retrieve all pins and then drop pin added to the map
+        
+        // add "if let" OR add "!" after [Pin] (ask MENTOR ???) to UNWRAP the optional pin value! - because returns type from fetchAllPins is - [Pin]? -> "?" = optional -
+        
+        var annotations = [MKPointAnnotation]() // create an array to store all pins' coordinate
+        
+        // use for loop to keep adding each annotation to mapView ?!
+        // class Pin has latitude & longitude
+        
+        for pin in allPins! {
+            let long = pin.longitude as Double
+            let lat = pin.latitude as Double
+            
+            let coordinates = CLLocationCoordinate2D(latitude: lat, longitude: long)
+            let annotation = MKPointAnnotation()
+            // convert latitude / longitude to MKPointAnnotation()   -> we need to do CLLocationCoordinate2D(latitude: lat, longitude: long
+            annotation.coordinate = coordinates
+            annotations.append(annotation)
+        }
+        print("total annotations are \(annotations.count)")
+       // DispatchQueue.main.async {
+            self.mapView.addAnnotations(annotations)
+            print("mapView.annotations.count \(self.mapView.annotations.count)")
+        self.mapView.showAnnotations(annotations, animated: false)
+    //}
+       // mapView.addAnnotations(annotations) // most efficient way to add pins/ annotations on map - one time
+        
+        
+    } // END of func displayAllAnnotationsFromCoreData()
+
     func handleLongPress(_ gestureRecognizer : UIGestureRecognizer) {
         if gestureRecognizer.state != .began {return} /* The gesture when the tap has been pressed for the specified period (minimumPressDuration)*/
         let touchPoint = gestureRecognizer.location(in: mapView) // Get location from added pin
@@ -272,7 +396,6 @@ extension MapViewController {
 
         // MARK - add a new  of MKPointAnnotation (a PIN) to mapView to display
         mapView.addAnnotation(annotation)
-        
     }
     
     
@@ -282,6 +405,7 @@ extension MapViewController {
         // return photos' data -> only get the photo's TOTAL PAGES, and pass it to another API call for THAT PAGE's photo data
         
         // 1. set methodparameters - now, add related constants to FlickrParameterKeys under Constants.swift
+        // it may be redundant because we have we are setting methodParameters  @ FlickConvenience.swift...
         let methodParameters = [
             Constants.FlickrParameterKeys.Method : Constants.FlickrParameterValues.SearchMethod,
             Constants.FlickrParameterKeys.APIKey : Constants.FlickrParameterValues.APIKey,
@@ -330,28 +454,35 @@ extension MapViewController {
         // there is no "save" function to be called YET - add it with do/ try/ catch block - to avoid FAILURE
         do {
             try stack.saveContext()
-            self.fetchAllPins()  // ??? do we really need it here ??? or just for debugging purpose? we already call this to display pins
             print("Successfully saved")
         } catch {
             print("Saved failed")
         }
  
-        print("newPin is, \(newPin)")
  
         // if need to save i/s autosave, here is the place to call save() -> Ans: Mentor- autosave only neeed when app is handling large data continously.
     } // END of private func createPinInstance
     
-    // ??? Thinking about calling it here @ mapViewController, so that createPhoto is here at the same placae as createPIN - so we know which pin to append this photo???
-    private func createPhotoInstance(){
-        FlickrConvenience.getPhotoArrayByRandPage() {(photosArray, error) in
-        // in order to call controller's func - example:UdacityClient.sharedInstance().submitStudentLoc() {(success, error) in
-            
-            
-        }
-    }
-
-    // A Flickr API call to return Photos based on lat/ lon passed, when a new PIN is created.
+    // MARK: - MapViewController - Configure UI
+    // pass error to this func - either it's self made up or error passed from the server through .dataTask ???
     
+    // nikki - app specific - display label "No photo returned" when no photo is returned - don't use Alert Box!!
+    func displayError(_ errorString: String?) {
+        if let errorString = errorString { // unwrap the value of errorString
+            
+            // set UI alertVC
+            let errorAlert = UIAlertController(title: "Failure", message: errorString, preferredStyle: UIAlertControllerStyle.alert)
+            errorAlert.addAction(UIAlertAction(title: "OK", style: .default, handler: { (action: UIAlertAction!) in
+                // what happens when user clicks ok? Ans: to dismiss the alert box
+                errorAlert.dismiss(animated: true, completion: nil)
+            }))
+            
+            // need to call alert to present @ main queue
+            performUIUpdatesOnMan {
+                self.present(errorAlert, animated: true, completion: nil) //  have to place any interface code on mainQueue
+            }
+        } //END of if let errorString
+    } // END of func displayError
 } // END of extension MapViewController {
 
 /* Here we create an enum with associated values and constrained to a generic type, you probably heard about generics in Swift, but what are they? Generic programming is a way to write functions and data types while making minimal assumptions about the type of data being used, Swift generics create code that does not get specific about underlying data types, allowing for elegant abstractions that produce cleaner code with fewer bugs! 
@@ -391,30 +522,25 @@ enum Result <T>{
 // refresh collection view/ add collection view
 // delete all data, and call func of calling flicker API, reload data, refresh data
 
-// MARK: - MapViewController - Configure UI
-private extension MapViewController {
-    
-    // pass error to this func - either it's self made up or error passed from the server through .dataTask
-    
-    // nikki - app specific - display label "No photo returned" when no photo is returned - don't use Alert Box!!
-    func displayError(_ errorString: String?) {
-        if let errorString = errorString { // unwrap the value of errorString
-            
-            // set UI alertVC
-            let errorAlert = UIAlertController(title: "Failure", message: errorString, preferredStyle: UIAlertControllerStyle.alert)
-            errorAlert.addAction(UIAlertAction(title: "OK", style: .default, handler: { (action: UIAlertAction!) in
-                // what happens when user clicks ok? Ans: to dismiss the alert box
-                errorAlert.dismiss(animated: true, completion: nil)
-            }))
-            
-            // need to call alert to present @ main queue
-            performUIUpdatesOnMan {
-                self.present(errorAlert, animated: true, completion: nil) //  have to place any interface code on mainQueue
-            }
-        } //END of if let errorString
-    } // END of func displayError
-    
-} // END of private extension MapViewController
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

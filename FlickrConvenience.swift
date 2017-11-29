@@ -4,21 +4,25 @@
 //
 //  Created by Nikki L on 11/12/17.
 //  Copyright © 2017 Nikki. All rights reserved.
-//
+// Contains all network calls only
 
 import Foundation
 
 class FlickrConvenience: NSObject {
 
     var totalPages: Int? = nil  // change according to what is returned - this needs to be a sharedInstance, otherwise, it won;t be reset @ mapViewController when user hits "back", and do anohter pin.
+    
+    
+    
     let stack = CoreDataStack(modelName: "Model")!   // @ struct CoreDataStack.swift - init(modelName: String) -> it's expecting modelname input, modelnames can be found @  Model.xcdatamodeid file - which is "Model" (not Pin/ Photo - theses r entities)
     // let stack = CoreDataStack(modelName: "Model")!
 
     // MARK: All network calls should be here
     
-    private func getPhotoTotalPage(_ methodParameters: [String: AnyObject], _ completionHandlerForGetTotalPages: @escaping (_ totalPages: Int?, _ error: NSError?) -> Void) -> URLSessionDataTask { // error will be sent back to UI view - so that we can display on UI
+    func getPhotoTotalPage(_ methodParameters: [String: AnyObject], _ completionHandlerForGetTotalPages: @escaping (_ totalPages: Int?, _ error: NSError?) -> Void) -> URLSessionDataTask { // error will be sent back to UI view - so that we can display on UI
         
         // When network call from func getPhotoArrayFromFlickrWithRandomPage returns, it comes with photoArray, and then pass it to completionHandlerForGetTotalPages back to viewController. And do the work there.. OR
+        
         
         // create session and request
         let session = URLSession.shared
@@ -102,7 +106,7 @@ class FlickrConvenience: NSObject {
     // MARK - call below func ONCE inside func "getPhotoTotalPageFromFlickrBySearch" & also when user tap "New Collection" - this func RETURNS ACTUAL PHOTO
     // Call below func @ ViewController, inside this func, call another func that returns totalPage, so that we can calculate the randPage. And pass it another network call to get photoArray, and pass it back to completion Hanlder, which is returned @ ViewController
     
-    func getPhotoArrayByRandPage(_ completionHandlerForPhotoArray: @escaping (_ photoArray: [[String: AnyObject]]?, _ error: NSError?) -> Void) -> URLSessionDataTask {
+    func getPhotoArrayByRandPage(_ latitude: Double, _ longitude: Double, _ currentPin: Pin, _ completionHandlerForPhotoArray: @escaping (_ photoArray: [[String: AnyObject]]?, _ error: NSError?) -> Void) -> URLSessionDataTask {
         
         let methodParameters = [
             Constants.FlickrParameterKeys.Method : Constants.FlickrParameterValues.SearchMethod,
@@ -112,6 +116,8 @@ class FlickrConvenience: NSObject {
             Constants.FlickrParameterKeys.Format : Constants.FlickrParameterValues.ResponseFormat,
             Constants.FlickrParameterKeys.NoJsonCallback : Constants.FlickrParameterValues.DisableJSONCallback,
             ]
+        
+        // need to add bboxstring here. we need lon, and lat. ...
         
         /* Scenerio 1: First time, self.totalPages == nil
            # call .getPhotoTotalPage */
@@ -211,66 +217,13 @@ class FlickrConvenience: NSObject {
             
             // Passing photoArray to completionHandler, and go back to the MapViewController
             completionHandlerForPhotoArray(photosArray, nil)
-            
-            
-            // ??? where to put this code??? - should call this @ collection view, because photosArray got pass to there??? - but that means saving mediaURL and title will be done on collection view..... is that what we want? dont' we prefer doing it here @ FlickrConvenience???
-            /* Passing photosArray to CHForGetPhotoArray - and return back to the View controller, can display "No image" there if there is no photo returned */
-            // when random page pictures returned, save the Photo to CoreData - by creating Photo instance. Save Photo URL, title
-            // parse the data - that only contains 1 page's PhotoArray - if count > 1 photo
-            if photosArray.count > 0 { // if photosArray has > 0 photo = have photo at all
-                // we need - each Photo's Title & MediumURL right now
-                for photoDict in photosArray {
-                    // save each to core data
-                    // each photoDict has Title (=name), MediumURL (=mediaURL)
-                    let mediaURL = photoDict[Constants.FlickrResponseKeys.MediumURL]
-                    let photoName = photoDict[Constants.FlickrResponseKeys.Title]
-                    
-                    // photoName, mediaURL are the names in CoreData exactly - add them one by one
-                    self.createPhotoInstance(mediaURL as! String, photoName as! String)
-                    
-                    // how to ??? add these photo to that pin???
-                    
-                    
-                }
-                
-                
-                
-            }
+ 
         } // END of let task = dataTask
         
-        
-        
-        
-        
-        task.resume()
+        task.resume() // do we need these 2 lines of codes ??? - I guess yes because this is the original one dataTask call, not like getStudentLocation @ onTheMap, a taskGetForMethod inside another func
         return task
         
     } // END of private func getPhotoFromFlickrBySearchWithRandomPageNumber
-    
-    // CREATE a Photo Instance - refer to Photo+CoreDataClass.swift - convenience init - // convenience init(mediaURL: String, photoName: String, context: NSManagedObjectContext){
-    private func createPhotoInstance(_ mediaURL: String, _ photoName: String) -> Void {
-        
-        // let newPin = Pin(latitude: lat, longitude: lon, context: stack.context)
-        // Photos data returned from step 3 - we need to save those photo to CoreData by creating NSManagedObject - here is stack.context
-        let newPhoto = Photo(mediaURL: mediaURL, photoName: photoName, context: stack.context)   // to init Photo instance - call class Photo and input its properties
-        print("newPhoto is \(newPhoto)")
-        
-        // ask mentor??? How to add Photos belongs to this pin??? - check notes of Notes!
-        // Let's set the notebook property of those 2 notes
-        newPhoto.pin = newPin
-        
-        
-        
-        // now - saveContxt with do/ catch block - industrial standard to avoid app crashing
-        do {
-            try stack.saveContext()
-            print("Successlly saved")
-        } catch {
-            print("Saved failed!")
-        }
-    }
-    
-    
     
     // 3. Create a helper func make "url", so we can pass it to func "" inside the network call
     private func flickrURLFromParameters(_ parameters: [String:AnyObject]) -> URL {
@@ -309,3 +262,4 @@ class FlickrConvenience: NSObject {
 
 
     
+
