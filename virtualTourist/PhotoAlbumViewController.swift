@@ -7,34 +7,46 @@
 //
 
 import UIKit
+import MapKit
 
-class PhotoAlbumViewController: UIViewController {
+class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectionViewDelegate {
     @IBOutlet weak var noPhotoLabel: UILabel!  // hide it if PhotoArray > 0
     @IBOutlet weak var newCollection: UIButton!
+    
+    @IBOutlet weak var mapView: MKMapView! // it does not have MKMapViewDelegate till adding "self.mapView.delegate = self  // self = MapVC.swift"
     
     @IBAction func newCollection(_ sender: Any) {
         // not resetting TotalPage but calling func "getPhotoArrayFromFlickrWithRandomPage"
         
     }
     
-    var currentPinObject:Pin? //  Error raised if -> var currentPinObject = Pin
+    var currentPinObject:Pin? //  Error raised if -> var currentPinObject = Pin- remember to unwrap it below
     
     let stack = CoreDataStack(modelName: "Model")!  // because class func createPhotoInstance(_ mediaURL: String, _ photoName: String, _ currentPin: Pin, _ context: NSManagedObjectContext) -> Void { - has context as input... pass "stack.context" in context>
     
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        // check Photo.count
+        // - if Photo.count > 1 -> hide the NoImage
+        noPhotoLabel.isHidden = true
+        newCollection.isEnabled = true
+        
+        // - if Photo.count == 0 -> hide collection view.
+        noPhotoLabel.isHidden = false
+        newCollection.isEnabled = false
+        
+        // get the currentPinObject's coordinate, and display 
+        self.mapView.delegate = self
+        displayCurrentPinOnMap()
+        
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         self.setUIEnabled(false)
         
-        print("currentPinObject being passed is ... \(currentPinObject)")
-        
-        // unwrapping optional
-        if let currentPinObject = self.currentPinObject {
-            // do something with the curret
-            
-            
-            
-        }
         // call getPhotoTotalPage and see what it returns - oh, also need to hard cord Hakone Garden @ the API call to make sure there are pictures to return for testing
         /*let methodParameters = [
             Constants.FlickrParameterKeys.Method : Constants.FlickrParameterValues.SearchMethod,
@@ -59,7 +71,7 @@ class PhotoAlbumViewController: UIViewController {
         
         // call getPhotoArrayByRandPage to test it out first. After testing, move it to
         /* prolly don't even have to pass latitude/ longitude as currentPinObject is passed to another viewcontroller ???
-        FlickrConvenience.sharedInstance().getPhotoArrayByRandPage(latitude, longitude, currentPinObject) { (photosArray, error) in
+        FlickrConvenience.sharedInstance().getPhotoArrayByRandPage(currentPinObject) { (photosArray, error) in
             // code here
             // ??? where to put this code??? - should call this @ collection view, because photosArray got pass to there??? - but that means saving mediaURL and title will be done on collection view..... is that what we want? dont' we prefer doing it here @ FlickrConvenience???
             /* Passing photosArray to CHForGetPhotoArray - and return back to the View controller, can display "No image" there if there is no photo returned */
@@ -88,6 +100,28 @@ class PhotoAlbumViewController: UIViewController {
     // call displayError() -> expects String -> it shows alert box with string
     // instead of calling ViewController's func displayError, we pass the "error" to completion handler!
     // self.displayError("There was an error with your request \(error?.localizedDescription)") // convert NSError to String with ".localizedDescription"
+    
+    // MARK - to display pin that user just selected
+    func displayCurrentPinOnMap() -> Void {
+        let annotation = MKPointAnnotation() // Pin
+        if let currentPin = self.currentPinObject { // unwrap optional value
+            
+            // set span and zoom level
+            let center = CLLocationCoordinate2D(latitude: currentPin.latitude, longitude: currentPin.longitude)
+            let span  = MKCoordinateSpan(latitudeDelta: 0.075, longitudeDelta: 0.075)
+            
+            // Setting mapView's center & span - does not set Annotation location at all!
+            mapView.region = MKCoordinateRegion(center: center, span: span)
+            
+            // add coordinate to the Annotation
+            annotation.coordinate = CLLocationCoordinate2D(latitude: currentPin.latitude, longitude: currentPin.longitude)
+        }
+        
+        self.mapView.addAnnotation(annotation)
+        print("this pin coordinate is \(annotation.coordinate)")
+
+    }
+    
     
 } // END of class PhotoAlbumViewController: UIViewController {
 

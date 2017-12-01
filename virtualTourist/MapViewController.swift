@@ -23,11 +23,10 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     var currentPinObject:Pin? //  Error raised if -> var currentPinObject = Pin
     
     override func viewWillAppear(_ animated: Bool) { // ask mentor??? do i need to keep this "_ animated: Bool? - Nikki: I think we should?
-      super.viewWillAppear(animated)
-        FlickrConvenience.sharedInstance().totalPages = nil
         
-        
-        
+        super.viewWillAppear(animated)
+        FlickrConvenience.sharedInstance().totalPages = nil // viewWillAppear is called everytime mapView is shown
+   
         // add all the pins from Core Data
         displayAllAnnotationsFromCoreData()
         
@@ -131,6 +130,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     func fetchAllPins() -> [Pin]? {  //  is this correct type of return? [Pin] - is class Pin
         //1. create NSFetchRequest for Pin entity
         let fetchRequest = NSFetchRequest<Pin>(entityName: "Pin") // <Pin> -> "public class Pin: NSManagedObject" - and since .fetch(expecting: NSFetchRequest  type, so we set fetchRequest = NSFetchRequest<Pin>
+        
         do {
             //2. Use context to fetch the data using NSFetchRequest - //stack.context.fetch .
             // we set let stack = CoreDataStack -> inside CoreDataStack is let context: NSManagedObjectContext -> so we call stack.context.fetch -> and inside "context" (=open class NSManagedObjectContext ) -> it has func "fetch" -> so, context.fetch
@@ -178,9 +178,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         // pinView is now one of the "MKPinAnnotationView" -> means it can call its properties as below:
         if pinView == nil {   // if there is no pin ever assigned on the map YET, set its design
             pinView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: reuserId)
-            pinView!.canShowCallout = true // Callout = a callout bubble will be shown when pin
             pinView!.pinTintColor = .red
-            pinView!.rightCalloutAccessoryView = UIButton(type: .detailDisclosure)
             print("if pinView == nil")
         } else {  // dequeueReusable "Cell" = place pin of student on the map
             pinView!.annotation = annotation
@@ -244,29 +242,23 @@ class MapViewController: UIViewController, MKMapViewDelegate {
 //        let a
 //        
 //    }
-//    
+    
+    
     
     // Currently, pins are shown on map, but not able to be tapped
     // OS level detect when a pin is selected, trigger below func
-    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+    
+    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         
-        // open PhotoAlbumView + prepare + perform sergue
-        if control == view.rightCalloutAccessoryView {
-            let app = UIApplication.shared
-            
-            // what to expect??
-            // open PhotoAlbumView... - but need to pass FOUND pin pobject, how can I enable pin being tappable. and send ?
-            
-            
-            
-        }
-  
+        // when user taps on this pin, what do you want it to respond...
+        // pass Coordinate to FetchRequest's predicate condition -> find matching pin from CoreData -> save as currentPin -> pass it to PhotoVC with prepare Segue & perform Segue
         
-        print("User selected a Pin")
+        print("User selected a Pin, \(view.annotation?.coordinate)")
         
-        if let selectedCoordinate = view.annotation?.coordinate { // the annotation that triggers "didSelect" on the UI view
+        // get selected pin's coordindate
+        if let selectedCoordinate = view.annotation?.coordinate {
+            
             // Write the predicate for Double for CoreData entity - value: %lf - long float
-            
             let pred = NSPredicate(format: "latitude = %lf AND longitude = %lf", selectedCoordinate.latitude, selectedCoordinate.longitude)
             
             // pred is a condition - use this NSPredicate, we need to create a fetchResult
@@ -274,12 +266,13 @@ class MapViewController: UIViewController, MKMapViewDelegate {
             
             // will return the PIN object
         
-            //1. create NSFetchRequest for Pin entity
+            //1. create NSFetchRequest for Pin entity- similar to "which entiry data are you looking into?
             let fetchRequest = NSFetchRequest<Pin>(entityName: "Pin") // <Pin> -> "public class Pin: NSManagedObject" - and since .fetch(expecting: NSFetchRequest  type, so we set fetchRequest = NSFetchRequest<Pin>
             do {
                 // Look through Pin Object against those in Core Data for a match?
                 // Find a PIN match in CoreData (it should because Pin Instance is created already) -> return its object...
                 fetchRequest.predicate = pred // condition
+                
                 //2. Use context to fetch the data using NSFetchRequest - //stack.context.fetch .
                 // we set let stack = CoreDataStack -> inside CoreDataStack is let context: NSManagedObjectContext -> so we call stack.context.fetch -> and inside "context" (=open class NSManagedObjectContext ) -> it has func "fetch" -> so, context.fetch
                 // template: let fetchedResults = try managedObjectContext!.fetch(fetchRequest)
@@ -289,25 +282,25 @@ class MapViewController: UIViewController, MKMapViewDelegate {
                
                 print("matching Pin is, \(self.currentPinObject)")
                 
+                // call getPhotoArray???
+                // testing with getPhotoTotalPages first
+                searchByCoordinate()
+                
+                
+                
+                
+                
             } catch let error as NSError {
                 print("error from currentPin is \(error)")
             }
             
-            // pass this currentPinObject to PhotoAlbumViewController
+            // this func will trigger prepare segue that pass this currentPinObject to PhotoAlbumViewController
             self.performSegue(withIdentifier: "PhotoAlbumVC", sender: self)
-            // how to pass this pin object to the PhotoAlbumViewController? Ans: by prepare for segue!
             
         } // END of if let selectedCoordinate
-        
-        // let context = self.stack.
-        
-        // do i need to care about calling this mainQueue or not??? ask mentor???
-         // .mainQueueConcurrencyType)
-        
-        
     } // END of func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView)
     
-    // first, prepareForSegue > second, performSegue
+    // first, write prepareForSegue > second, write performSegue - Then, when .performSegue is called, it triggers this func.
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         
         let nextController = segue.destination as! PhotoAlbumViewController
@@ -380,12 +373,8 @@ extension MapViewController {
         
         print("touchMapCoordinate is ... \(touchMapCoordinate)") // expected print out: (latitude, longitude)
         
-        // call below at background -- UNCOMMENT THIS !!!
-        // MARK - add func xxx here - to pass "touchMapCoordinate"'s Lat & Long to Flickr's getPhoto API call
-        // searchByCoordinate(lon, lat)  // hardcode this searchByCoordinate(37.2542, 122.0396)  (Hakone garden)
-        
         // MARK - trigger func to pass lon/ lat to CREATE INSTANCE of a PIN - also, call ".save" to save this PIN instance to CORE DATA !
-        createPinInstance(self.lon, self.lat)
+        createPinInstance(self.lat, self.lon)
         
         let annotation = MKPointAnnotation() // Pin
         annotation.coordinate = touchMapCoordinate
@@ -399,47 +388,69 @@ extension MapViewController {
     }
     
     
-    func searchByCoordinate() {
-        // call Flickr API here
-        // bbox (lat, lon)
-        // return photos' data -> only get the photo's TOTAL PAGES, and pass it to another API call for THAT PAGE's photo data
-        
-        // 1. set methodparameters - now, add related constants to FlickrParameterKeys under Constants.swift
-        // it may be redundant because we have we are setting methodParameters  @ FlickConvenience.swift...
-        let methodParameters = [
-            Constants.FlickrParameterKeys.Method : Constants.FlickrParameterValues.SearchMethod,
-            Constants.FlickrParameterKeys.APIKey : Constants.FlickrParameterValues.APIKey,
-            Constants.FlickrParameterKeys.BoundingBox : bboxString(),
-            Constants.FlickrParameterKeys.SafeSearch : Constants.FlickrParameterValues.UseSafeSearch,
-            Constants.FlickrParameterKeys.Extras : Constants.FlickrParameterValues.MediumURL,
-            Constants.FlickrParameterKeys.Format : Constants.FlickrParameterValues.ResponseFormat,
-            Constants.FlickrParameterKeys.NoJsonCallback : Constants.FlickrParameterValues.DisableJSONCallback
-        ]
-        
-        /* 2. Call a helper func "getPhotoTotalPageFromFlickrBySearch" that handles 
-         A - network call to return Total Page Numbers
-         B - the methodparameters to form something like this method=flickr.photos.search&api_key=3f8c7ede36 (add "=", "&" - to form a URL to input to step 3
-         See below "2"
-        */
-        
-        // Nikki: call display getPhotoFromFlickrBySearchWithRandomPageNumber where returns "PhotoArray" back to compleiton handler
-        
-        // not this - getPhotoTotalPageFromFlickrBySearch(methodParameters as [String: AnyObject])
-        
-    }
-    
-    private func bboxString() -> String {
+    // FOR TESTING ONLY
+    private func bboxString(_ latitude: Double, _ longitude: Double) -> String {
         
         // ASK MENTOR ?? do i still need to check if self.lon has something? but with i wrote if let latitude = self.lat -> it raised error...
         
         // ensure bbox is bounded by min and max
-        let minimumLon = max(self.lon - Constants.Flickr.SearchBBoxHalfWidth, Constants.Flickr.SearchLonRange.0)
-        let minimumLat = max(self.lat - Constants.Flickr.SearchBBoxHalfHeight, Constants.Flickr.SearchLatRange.0)
-        let maximumLon = min(self.lon + Constants.Flickr.SearchBBoxHalfWidth, Constants.Flickr.SearchLonRange.1)
-        let maximumLat = min(self.lat + Constants.Flickr.SearchBBoxHalfHeight, Constants.Flickr.SearchLatRange.1)
+        let minimumLon = max(longitude - Constants.Flickr.SearchBBoxHalfWidth, Constants.Flickr.SearchLonRange.0)
+        let minimumLat = max(latitude - Constants.Flickr.SearchBBoxHalfHeight, Constants.Flickr.SearchLatRange.0)
+        let maximumLon = min(longitude + Constants.Flickr.SearchBBoxHalfWidth, Constants.Flickr.SearchLonRange.1)
+        let maximumLat = min(latitude + Constants.Flickr.SearchBBoxHalfHeight, Constants.Flickr.SearchLatRange.1)
         return "\(minimumLon),\(minimumLat),\(maximumLon),\(maximumLat)"
     }
-
+    
+    func searchByCoordinate() {
+        // call Flickr API here
+//        testing for getTotalPages first...
+        
+        // currentPinObject must has value as calling this after it's set inside didSelect
+//        if let latitude = currentPinObject?.latitude, let longitude = currentPinObject?.longitude {
+//            let methodPara = [
+//                Constants.FlickrParameterKeys.Method : Constants.FlickrParameterValues.SearchMethod,
+//                Constants.FlickrParameterKeys.APIKey : Constants.FlickrParameterValues.APIKey,
+//                Constants.FlickrParameterKeys.BoundingBox : bboxString(latitude, longitude),
+//                Constants.FlickrParameterKeys.SafeSearch : Constants.FlickrParameterValues.UseSafeSearch,
+//                Constants.FlickrParameterKeys.Extras : Constants.FlickrParameterValues.MediumURL,
+//                Constants.FlickrParameterKeys.Format : Constants.FlickrParameterValues.ResponseFormat,
+//                Constants.FlickrParameterKeys.NoJsonCallback : Constants.FlickrParameterValues.DisableJSONCallback,
+//                ]
+        
+//            FlickrConvenience.sharedInstance().getPhotoTotalPage(methodPara as [String : AnyObject]) { (totalPages, error) in
+//                // 
+//                print("totalPages is \(totalPages)")
+//            }
+//            
+        
+        if let currentPinObject = self.currentPinObject {
+            FlickrConvenience.sharedInstance().getPhotoArrayByRandPage(currentPinObject) { (PhotoArray, error) in
+                print("Photo array lenght is \(PhotoArray?.count)")
+                
+                
+                
+            }
+        } // end of if let
+ 
+      } // end of searchByCoordinate
+        
+//        } // end of if let latitude
+        
+//        
+//        FlickrConvenience.sharedInstance().getPhotoArrayByRandPage(currentPinObject!) { (photoArray, error) in
+//            // unwrap currentPin
+//            
+//            // photoArray comes back... we will call craetePhotoInstance and save to core data one by one....
+//            
+//            
+//            
+//            
+//            
+//        } // end of FlickrConvenience.sharedInstance().getPhotoArrayByRandPag
+        
+        
+    
+    
     // CREATE a Pin Instance
     private func createPinInstance(_ lat: Double, _ lon: Double) -> Void {
         
