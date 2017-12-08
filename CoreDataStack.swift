@@ -6,12 +6,32 @@
 //
 
 import CoreData
+import Foundation
 
 /* FROM UDACITY's TEMPLATE */
 /* MARK: - CoreDataStack - this file init model of Model.xcdatamodeId - creates Context and add to Persistent Store coordinator, Add Persistent Store to Persistent Store coordinator. And handle save() when detecting change in context.
  */
 
-struct CoreDataStack {
+// should make a singleton with class and not struct - reason - https://stackoverflow.com/questions/36788169/whats-the-difference-between-struct-based-and-class-based-singletons
+
+
+// set up class func "sharedInstance" here
+// I just change "Struct CoreDataStack to class CoreDataStack" ??? ask mentor if that is okay. I changed it because sharedInstance allow mutation only if its a CLASS but not "Struct"!
+class CoreDataStack {
+    
+    class func sharedInstance() -> CoreDataStack {
+        struct Singleton {
+            static var sharedInstance = CoreDataStack(modelName: "Model")!
+        }
+        return Singleton.sharedInstance
+    }
+    
+//    class func sharedInstance() -> UdacityClient {
+//        struct Singleton {
+//            static var sharedInstance = UdacityClient()
+//        }
+//        return Singleton.sharedInstance
+//    }
     
     // MARK: Properties
     

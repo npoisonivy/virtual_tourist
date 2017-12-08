@@ -124,6 +124,7 @@ class FlickrConvenience: NSObject {
         let methodParameters = [
             Constants.FlickrParameterKeys.Method : Constants.FlickrParameterValues.SearchMethod,
             Constants.FlickrParameterKeys.APIKey : Constants.FlickrParameterValues.APIKey,
+            // need to add bboxstring here. we need lon, and lat. ...
             Constants.FlickrParameterKeys.BoundingBox : bboxString(currentPin.latitude, currentPin.longitude),
             Constants.FlickrParameterKeys.SafeSearch : Constants.FlickrParameterValues.UseSafeSearch,
             Constants.FlickrParameterKeys.Extras : Constants.FlickrParameterValues.MediumURL,
@@ -131,36 +132,25 @@ class FlickrConvenience: NSObject {
             Constants.FlickrParameterKeys.NoJsonCallback : Constants.FlickrParameterValues.DisableJSONCallback,
             ]
         
-        // need to add bboxstring here. we need lon, and lat. ...
-        
         print("returning totalPage is... ") // 50
-        
-        // Don't even check, just call it everytime!
-        
-        /* Scenerio 1: First time, self.totalPages == nil
-           # call .getPhotoTotalPage */
    
-        // call .getTotalPage here
-        self.getPhotoTotalPage(methodParameters as [String : AnyObject]) { (totalPage, error) in
-            // totalPage is found
-            
-            print("total page is \(self.totalPages)")
-            self.totalPages = totalPage // reset this @ viewWillAppear @ mapViewController
-            
-            // deal with error
-            // already have this code @ .getTotalPage "sendError("\(error.localizedDescription)") // convert an "NSerror" to "errorString" -> which leads to pass error to getPhotoTotalPage completion handler -> "completionHandlerForGetTotalPages(nil, NSError(domain: "getPhotoTotalPageFromFlickr", code: 1, userInfo: userInfo))" -> which is right here .... so what else do i need to to ??? ask mentor
-            // write sendError here again?
+        // call .getPhotoTotalPage here -> getPhotoTotalPage call is a "URLSessionDataTask"??
+       let getTotalPagesCall = self.getPhotoTotalPage(methodParameters as [String : AnyObject]) { (totalPage, error) in
         
-            // scenerio 1 & 2 - now both has totalPage != nil - now both needs randPage Calcuation + call .getPhotoArray network call with randPage
-            // calculate the randPage
+            print("total page is \(self.totalPages)") // totalPage is returned
+            self.totalPages = totalPage // reset this @ viewWillAppear @ mapViewController
+        
+            // needs randPage Calcuation + call .getPhotoArray network call with randPage
             let pageLimit = min(self.totalPages!, 60)
             let randomPage = Int(arc4random_uniform(UInt32(pageLimit))) + 1
-            
-            // call another netowrk call, pass new parameter and get the photoArray on this randPage
+            let randomPageString = String(randomPage)
+            print(randomPageString)
+        
+            // call another netowrk call, add new parameter and get the photoArray on this randPage
             // add randPage to parameter...
             var methodParametersWithPageNumber = methodParameters
-            methodParametersWithPageNumber[Constants.FlickrParameterKeys.Page] = (randomPage as AnyObject) as! String// ASK MENTOR??? why can't I add randomPage as AnyObject, why force me to add as "String"? the methodPara expects "anyObject", right??? // add as AnyObject - because dictionary expecting "AnyObject" (hint: [String: AnyObject]), and randPage is an Int - convert it to AnyObject
-            
+            methodParametersWithPageNumber[Constants.FlickrParameterKeys.Page] = randomPageString // ASK
+        
             // Make another network call, this time, search with the random number obtained from above
             // create session and request
             let session = URLSession.shared
@@ -221,14 +211,14 @@ class FlickrConvenience: NSObject {
                 // Check if keys we are looking for is in photoDictionary
                 /* GUARD - Is the "photos" key in our result? */
                 guard let photosDictionary = parsedResult[Constants.FlickrResponseKeys.Photos] as? [String: AnyObject] else {
-                    sendError("Cannot find keys '\(Constants.FlickrResponseKeys.Photos) in \(parsedResult)")
+                    sendError("Cannot find keys '\(Constants.FlickrResponseKeys.Photos) in \(parsedResult) in photoDictionary")
                     return
                 }
-                
+                print("photo dictionary is \(photosDictionary)")
                 // Data returned is from that ONE random page - now, get PhotoArray!
                 /* GUARD - is "photo" key in photosDictionary? */
-                guard let photosArray = photosDictionary[Constants.FlickrResponseKeys.Photos] as? [[String: AnyObject]] else {
-                    sendError("Cannot find the key '\(Constants.FlickrResponseKeys.Photos)'")
+                guard let photosArray = photosDictionary[Constants.FlickrResponseKeys.Photo] as? [[String: AnyObject]] else {
+                    sendError("Cannot find the key '\(Constants.FlickrResponseKeys.Photo)' in photoArray")
                     return
                 }
                 
@@ -237,13 +227,13 @@ class FlickrConvenience: NSObject {
  
             } // END of let task = dataTask
             
-            task.resume() // do we need these 2 lines of codes ??? - I guess yes because this is the original one dataTask call, not like getStudentLocation @ onTheMap, a taskGetForMethod inside another func
+            task.resume()
             
-            return task
-            
-        } // END of self.getPhotoTotalPage(methodParameters
+        } // END of let getTotalPagesCall = self.getPhotoTotalPage
         
-    } // END of private func getPhotoFromFlickrBySearchWithRandomPageNumber
+        return getTotalPagesCall
+
+    } // END of private func getPhotoArrayByRandPage
     
     // 3. Create a helper func make "url", so we can pass it to func "" inside the network call
     private func flickrURLFromParameters(_ parameters: [String:AnyObject]) -> URL {

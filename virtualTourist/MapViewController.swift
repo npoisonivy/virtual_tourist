@@ -279,16 +279,13 @@ class MapViewController: UIViewController, MKMapViewDelegate {
                 let fetchedResults = try stack.context.fetch(fetchRequest) as [Pin] // right side returns array [Pin], since there is only one pin should be found, grab the pos[0]
                 print(fetchedResults)
                 self.currentPinObject = fetchedResults[0]
-               
+                /* testing (37.2542, 122.0396)  (Hakone garden)
+                currentPinObject?.latitude = 37.2542
+                currentPinObject?.longitude = 122.0396 */
+                
                 print("matching Pin is, \(self.currentPinObject)")
                 
-                // call getPhotoArray???
-                // testing with getPhotoTotalPages first
-                searchByCoordinate()
-                
-                
-                
-                
+                searchByCoordinate() // call API - request Flickr server based on currentPin's lat, lon to return corresponding Photo back and save to our coreData
                 
             } catch let error as NSError {
                 print("error from currentPin is \(error)")
@@ -403,29 +400,55 @@ extension MapViewController {
     
     func searchByCoordinate() {
         // call Flickr API here
-//        testing for getTotalPages first...
+        /* this block to test getTotalPages before get getPhotoArrayByRandPage
+
+        // *** currentPinObject must has value as calling this after it's set inside didSelect
+        if let latitude = currentPinObject?.latitude, let longitude = currentPinObject?.longitude {
+            let methodPara = [
+                Constants.FlickrParameterKeys.Method : Constants.FlickrParameterValues.SearchMethod,
+                Constants.FlickrParameterKeys.APIKey : Constants.FlickrParameterValues.APIKey,
+                Constants.FlickrParameterKeys.BoundingBox : bboxString(latitude, longitude),
+                Constants.FlickrParameterKeys.SafeSearch : Constants.FlickrParameterValues.UseSafeSearch,
+                Constants.FlickrParameterKeys.Extras : Constants.FlickrParameterValues.MediumURL,
+                Constants.FlickrParameterKeys.Format : Constants.FlickrParameterValues.ResponseFormat,
+                Constants.FlickrParameterKeys.NoJsonCallback : Constants.FlickrParameterValues.DisableJSONCallback,
+                ]
+        
+        FlickrConvenience.sharedInstance().getPhotoTotalPage(methodPara as [String : AnyObject]) { (totalPages, error) in
+                print("totalPages is \(totalPages)")
+            } 
+         */
         
         // currentPinObject must has value as calling this after it's set inside didSelect
-//        if let latitude = currentPinObject?.latitude, let longitude = currentPinObject?.longitude {
-//            let methodPara = [
-//                Constants.FlickrParameterKeys.Method : Constants.FlickrParameterValues.SearchMethod,
-//                Constants.FlickrParameterKeys.APIKey : Constants.FlickrParameterValues.APIKey,
-//                Constants.FlickrParameterKeys.BoundingBox : bboxString(latitude, longitude),
-//                Constants.FlickrParameterKeys.SafeSearch : Constants.FlickrParameterValues.UseSafeSearch,
-//                Constants.FlickrParameterKeys.Extras : Constants.FlickrParameterValues.MediumURL,
-//                Constants.FlickrParameterKeys.Format : Constants.FlickrParameterValues.ResponseFormat,
-//                Constants.FlickrParameterKeys.NoJsonCallback : Constants.FlickrParameterValues.DisableJSONCallback,
-//                ]
         
-//            FlickrConvenience.sharedInstance().getPhotoTotalPage(methodPara as [String : AnyObject]) { (totalPages, error) in
-//                // 
-//                print("totalPages is \(totalPages)")
-//            }
-//            
+        
         
         if let currentPinObject = self.currentPinObject {
             FlickrConvenience.sharedInstance().getPhotoArrayByRandPage(currentPinObject) { (PhotoArray, error) in
-                print("Photo array lenght is \(PhotoArray?.count)")
+                
+                print("Photo array length is \(PhotoArray?.count)")
+                
+                if let photoArray = PhotoArray {
+                    // for loop , for each photo array, grab each media_url, title.
+                    for photo in photoArray {
+                        
+                        // call  createPhotoInstance in side loop
+                        let mediaURL = photo["url_m"] as! String
+                        let photoName = photo["title"] as! String
+                        Photo.createPhotoInstance(mediaURL, photoName, currentPinObject, self.stack.context)
+                        
+                    }
+                    // there is no "save" function to be called YET - add it with do/ try/ catch block - to avoid FAILURE
+                    do {
+                        try self.stack.saveContext()
+                        print("Successfully saved")
+                    } catch {
+                        print("Saved failed")
+                    }
+
+                }
+                
+                
                 
                 
                 

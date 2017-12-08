@@ -39,22 +39,17 @@ public class Photo: NSManagedObject { // Photo is a child class of NSManagedObje
     
     // Photos data returned from getPhotoArrayByRandPage - we need to save those photo to CoreData by creating Photo: NSManagedObject
     class func createPhotoInstance(_ mediaURL: String, _ photoName: String, _ currentPin: Pin, _ context: NSManagedObjectContext) -> Void {
-        let newPhoto = Photo(mediaURL: mediaURL, photoName: photoName, context: context) // Mentor... not this stack or need to declare stack @ this file?
+        let newPhoto = Photo(mediaURL: mediaURL, photoName: photoName, context: context) // Mentor... not this stack or need to declare stack @ this file -Ans: context is being passed whever func createPhotoInstance is called - so not here.
         // currentPin.photo = newPhoto - cannot assign a photo to a NSSET, , need to add object to collection. otherwise, the photo is not added to the SET.
         newPhoto.pin = currentPin // adding photo to the NSSET by adding object to collection
-        
-        // save it to coreData - ask mentor... WHERE TO SAVE???
-        // now - saveContxt with do/ catch block - industrial standard to avoid app crashing
-        /*
-            do {
-                try stack.saveContext()
-            } catch {
-                print("Saved failed!")
-            }
-         */
-        
+                
     }
 }
+
+
+
+
+
 
 
 
