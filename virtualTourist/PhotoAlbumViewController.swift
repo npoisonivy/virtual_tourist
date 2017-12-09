@@ -54,32 +54,35 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
     
     // assign the type of class to this var "fetchedResultsController" (=NSObject) with @interface NSFetchedResultsController<ResultType:id<NSFetchRequestResult>> : NSObject
     // use this to debugg - lazy var fetchResultController: NSFetchedResultsController<Photo> = {
-    lazy var fetchedResultsController: NSFetchedResultsController<Photo> = { () -> NSFetchedResultsController<
-        Photo> in  // what is lazy var??? Does NSFetchedResultsController have completion handler...???
+    
+    lazy var fetchedResultsController: NSFetchedResultsController<Pin> = { () -> NSFetchedResultsController<
+        Pin> in  // what is lazy var??? Does NSFetchedResultsController have completion handler...???
         
-//        // need to unwrap "currentPinObject" value as it can be optional
-//        if let currentPinObject = self.currentPinObject {
-        
-            // when CH comes back, return NSFetchedResultsController back here, and we can call NSFetchRequest on that entity
-            let fetchRequest = NSFetchRequest<Photo>(entityName: "Photo") // resultType: "Photo"
-            fetchRequest.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)] // add property to it - by order of Photo's property - descending...
-        
-            // add filter "pred" - tell CoreData what to look for - pass lat + lon of self.currentPinObject!
-            fetchRequest.predicate = NSPredicate(format: "pin = %@", self.currentPinObject!) // filter needs to be the properties of Photo.... - "@NSManaged public var pin: Pin?" @ Photo+CoreDataProperties.swift  / format: "pin == %@", self.currentPinObject!
-        
-            print("currentPinObject is \(self.currentPinObject)")
-            print("fetchRequest.predicate is \(fetchRequest.predicate)")
-        
-            // intialize this fetchedResultsController (=NSObject) with properties
-            let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.sharedContext, sectionNameKeyPath: nil, cacheName: nil)
-            // public init(fetchRequest: NSFetchRequest<ResultType>, managedObjectContext context: NSManagedObjectContext, sectionNameKeyPath: String?, cacheName name: String?)
-        
-            fetchedResultsController.delegate = self // assign PhotoAlbumViewController.swift as delegate of fetchedResultsController. so we can call all func of fetchedResultsController RIGHT HERE @ PhotoAlbumViewController.swift
-            print("fetchedResultsController is \(fetchedResultsController)")
-        
-            return fetchedResultsController
-//        } // END of if let currentPinObject = self.currentPinObject {
-//         ??? what to return here if i have if let block to unwrap the self.currentPinObject ??? It gives my error...
+        //        // need to unwrap "currentPinObject" value as it can be optional
+        // if let currentPinObject = self.currentPinObject {
+
+        // when CH comes back, return NSFetchedResultsController back here, and we can call NSFetchRequest on that entity
+        let fetchRequest = NSFetchRequest<Pin>(entityName: "Pin") // resultType: "Photo"
+        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)] // add property to it - by order of Photo's property - descending...
+
+        // add filter "pred" - tell CoreData what to look for self.currentPinObject!
+        fetchRequest.predicate = NSPredicate(format: "latitude == %lf AND longitude == %lf", self.currentPinObject!.latitude, (self.currentPinObject?.longitude)!) // filter photos that are from currentPin ONLY! - currentPinObject == <Pin: 0x600000485500> (entity: Pin; id: 0xd000000000180000 <x-coredata://69D0775E-3962-4DA6-9A8D-CFBC7C89DFBE/Pin/p6>
+
+        print("currentPinObject is \(self.currentPinObject)")
+        print("fetchRequest.predicate is \(fetchRequest.predicate)")
+
+        // intialize this fetchedResultsController (=NSObject) with properties
+        let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.sharedContext, sectionNameKeyPath: nil, cacheName: nil)
+        // public init(fetchRequest: NSFetchRequest<ResultType>, managedObjectContext context: NSManagedObjectContext, sectionNameKeyPath: String?, cacheName name: String?)
+
+        fetchedResultsController.delegate = self // assign PhotoAlbumViewController.swift as delegate of fetchedResultsController. so we can call all func of fetchedResultsController RIGHT HERE @ PhotoAlbumViewController.swift
+        print("fetchedResultsController is \(fetchedResultsController)")
+       
+
+        // } // END of if let currentPinObject = self.currentPinObject {
+
+        return fetchedResultsController
+
     }() // END of lazy var fetchedResultsController:
     
     
@@ -239,7 +242,11 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
     // Configure Cell - what to display? - get it from object returned to "fetchedResultsController" earlier@
     func configureCell(_ cell: PhotoCollectionViewCell, atIndexPath indexPath: IndexPath) {
         print("in configureCell")
+        
+        // try to get photo from the fetchedResultsController (that is a Pin)
+        // it's gonna be a Pin!
         let photo = self.fetchedResultsController.object(at: indexPath)
+        print(photo)
         // return Photo object at the indexPath - includes - mediaURl, photoName & imageData, etc - check imageData == nil?
         // unwrap optional... 1. if first time, it's nil, if second time != nil
         if let photoImageData = photo.imageData {
@@ -248,8 +255,43 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
             cell.photoImageView.image = image
         } else {
             // call URLSession to get the ImageData
-           // getImageData() // need completion handler, get back the binary data back + display placeholder before data is back
+            // getImageData() // need completion handler, get back the binary data back + display placeholder before data is back
+            let imageURL = photo.mediaURL // Photo's url is string already - @NSManaged public var mediaURL: String?
+            
+            // API call
             print("getImageData API call should be triggered")
+            FlickrConvenience.sharedInstance().getImageData(photo, imageURL!, completionHandlerForGetImageData: { (imageData, error) in // "imageData" as NSData
+                
+                if let error = error {
+                    print("ImageData cannot be retrieved from Flickr server")
+                } else { // error is nil
+                    // unwrap photoImageData + updating UI...
+                    if let photoImageData = imageData {
+                        
+                        // add value to Photo's property "imageData" (NSData)
+                        photo.imageData = photoImageData
+                        
+                        // need to call .save on the current Context - to really save it to CoreData!
+                        // Call it with do/ try/ catch block - to avoid FAILURE
+                        do {
+                            try self.stack.saveContext()
+                            print("Successuly saved property imageData to Photo")
+                        } catch {
+                            print("Save failed for - property imageData to Photo ")
+                        }
+                        
+                        // retrieve url from coreData again for the image...
+                        let image = UIImage(data: photoImageData as Data)
+                        
+                        // avoid blocking UI
+                        DispatchQueue.main.async {
+                            cell.photoImageView.image = image
+                        } // END of DispatchQueue.main.async {
+                    } // END of if let photoImageData = imageData {
+                } // END of if/ else block
+            }) // END of FlickrConvenience.sharedInstance().getImageData(photo, ima
+          
+          
             
             
         } // END of if/else block of if let photoImageData
@@ -419,12 +461,11 @@ private extension PhotoAlbumViewController {
     }
     
     // MARK - UI features
-    func setUIEnabled(_ noPhotoLabelEnabled: Bool, _ newCollectionEnable: Bool) {
-        noPhotoLabel.isHidden = noPhotoLabelEnabled
-        newCollection.isEnabled = newCollectionEnable
+    func setUIEnabled(_ enabled: Bool) {
+        noPhotoLabel.isHidden = enabled
+        newCollection.isEnabled = enabled
         /* 1. @ viewDidLoad - if Photo.count == 0 -> setUIEnabled(false, false)
-           2. @viewDidLoad - if Photo.count > 0 -> inside URLsession call, during process - setUIEnabled(true, false)
-                after urlsession is done calling - setUIEnabled(true, true) */
+           2. @viewDidLoad - if Photo.count > 0 -> setUIEnabled(true, true) */
     }
     
     // MARK - Set it first @ viewDidLoad(), and then other places.
@@ -446,8 +487,3 @@ private extension PhotoAlbumViewController {
     
     
 } // END of private extension PhotoAlbumViewController {
-
-
-
-
-

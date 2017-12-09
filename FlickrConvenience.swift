@@ -235,6 +235,45 @@ class FlickrConvenience: NSObject {
 
     } // END of private func getPhotoArrayByRandPage
     
+    func getImageData(_ currentCellPhoto: Photo, _ ImageURLString: String, completionHandlerForGetImageData: @escaping (_ imageData: NSData?, _ error: NSError?) -> Void) -> URLSessionTask { // return nothing, as we just gonna update the coreData directly
+        
+        // convert String to url
+        let imageURL = URL(string: ImageURLString)
+        
+        let session = URLSession.shared
+        
+        let task = session.dataTask(with: imageURL!) { (data, response, error) in
+            
+            // download has finished
+            
+            // handle error
+            guard (error == nil) else {
+                // has error:
+                if let error = error {
+                    print("Error downloading photo: \(error)")
+                    completionHandlerForGetImageData(nil, error as NSError?)
+                }
+            return
+            } // END of guard (error == nil) else {
+            
+            // check for response code
+            if let res = response as? HTTPURLResponse {
+                print("Downloaded photo with response code \(res.statusCode)")
+            }
+            
+            // deal with returned data!
+            if let returnedImageData = data {
+                // add to photo's property
+                currentCellPhoto.imageData = returnedImageData as NSData? // Photo's @NSManaged public var imageData: NSData?
+                
+                // should I update view here??? not really... - because you will block the UI as there are lots of photos! - do it at PhotoAlbumViewController...
+                completionHandlerForGetImageData(returnedImageData as NSData, nil)
+            }
+        } // END of let task =
+        task.resume()
+        return task
+    } // END of getImageData()
+    
     // 3. Create a helper func make "url", so we can pass it to func "" inside the network call
     private func flickrURLFromParameters(_ parameters: [String:AnyObject]) -> URL {
         

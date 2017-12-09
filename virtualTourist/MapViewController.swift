@@ -259,7 +259,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         if let selectedCoordinate = view.annotation?.coordinate {
             
             // Write the predicate for Double for CoreData entity - value: %lf - long float
-            let pred = NSPredicate(format: "latitude = %lf AND longitude = %lf", selectedCoordinate.latitude, selectedCoordinate.longitude)
+            let pred = NSPredicate(format: "latitude == %lf AND longitude == %lf", selectedCoordinate.latitude, selectedCoordinate.longitude) // "=" is same as "==" in predicate - both mean equal to
             
             // pred is a condition - use this NSPredicate, we need to create a fetchResult
             // fetchRequest has a predicate property, so we add that property now
