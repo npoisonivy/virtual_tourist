@@ -63,6 +63,7 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 
         // when CH comes back, return NSFetchedResultsController back here, and we can call NSFetchRequest on that entity
         let fetchRequest = NSFetchRequest<Pin>(entityName: "Pin") // resultType: "Photo"
+        
         fetchRequest.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)] // add property to it - by order of Photo's property - descending...
 
         // add filter "pred" - tell CoreData what to look for self.currentPinObject!
@@ -77,10 +78,8 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 
         fetchedResultsController.delegate = self // assign PhotoAlbumViewController.swift as delegate of fetchedResultsController. so we can call all func of fetchedResultsController RIGHT HERE @ PhotoAlbumViewController.swift
         print("fetchedResultsController is \(fetchedResultsController)")
-       
-
-        // } // END of if let currentPinObject = self.currentPinObject {
-
+    // } // END of if let currentPinObject = self.currentPinObject {
+        
         return fetchedResultsController
 
     }() // END of lazy var fetchedResultsController:
@@ -118,6 +117,9 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
             print(".performFetch completed without error")
             print("fetchedResultsController is \(fetchedResultsController)")
             print("fetchedObjects are photos ... \(fetchedResultsController.fetchedObjects)") // what;s the use of "fetchedObjects"???
+            
+            
+            
         } catch let error1 as NSError {
             error = error1
         }
@@ -245,7 +247,9 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
         
         // try to get photo from the fetchedResultsController (that is a Pin)
         // it's gonna be a Pin!
-        let photo = self.fetchedResultsController.object(at: indexPath)
+        let photo = self.fetchedResultsController.fetchedObjects.photo
+        
+        //let photo = self.fetchedResultsController.object(at: indexPath)
         print(photo)
         // return Photo object at the indexPath - includes - mediaURl, photoName & imageData, etc - check imageData == nil?
         // unwrap optional... 1. if first time, it's nil, if second time != nil
