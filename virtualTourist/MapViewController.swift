@@ -258,8 +258,10 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         // get selected pin's coordindate
         if let selectedCoordinate = view.annotation?.coordinate {
             
+            // also need to be round, when fetching
             // Write the predicate for Double for CoreData entity - value: %lf - long float
-            let pred = NSPredicate(format: "latitude == %lf AND longitude == %lf", selectedCoordinate.latitude, selectedCoordinate.longitude) // "=" is same as "==" in predicate - both mean equal to
+            // Pass lat/ lon at decimal 5.
+            let pred = NSPredicate(format: "latitude == %lf AND longitude == %lf", ((selectedCoordinate.latitude*100000).rounded()/100000), ((selectedCoordinate.longitude*100000).rounded()/100000)) // "=" is same as "==" in predicate - both mean equal to
             
             // pred is a condition - use this NSPredicate, we need to create a fetchResult
             // fetchRequest has a predicate property, so we add that property now
@@ -277,13 +279,13 @@ class MapViewController: UIViewController, MKMapViewDelegate {
                 // we set let stack = CoreDataStack -> inside CoreDataStack is let context: NSManagedObjectContext -> so we call stack.context.fetch -> and inside "context" (=open class NSManagedObjectContext ) -> it has func "fetch" -> so, context.fetch
                 // template: let fetchedResults = try managedObjectContext!.fetch(fetchRequest)
                 let fetchedResults = try stack.context.fetch(fetchRequest) as [Pin] // right side returns array [Pin], since there is only one pin should be found, grab the pos[0]
-                print(fetchedResults)
+                print("fetchedResults is \(fetchedResults)")
                 self.currentPinObject = fetchedResults[0]
                 /* testing (37.2542, 122.0396)  (Hakone garden)
                 currentPinObject?.latitude = 37.2542
                 currentPinObject?.longitude = 122.0396 */
                 
-                print("matching Pin is, \(self.currentPinObject)")
+                print("matching Pin is, \(self.currentPinObject), latitude is \(self.currentPinObject), longitude is \(self.currentPinObject)")
                 
                 searchByCoordinate() // call API - request Flickr server based on currentPin's lat, lon to return corresponding Photo back and save to our coreData
                 
@@ -371,7 +373,9 @@ extension MapViewController {
         print("touchMapCoordinate is ... \(touchMapCoordinate)") // expected print out: (latitude, longitude)
         
         // MARK - trigger func to pass lon/ lat to CREATE INSTANCE of a PIN - also, call ".save" to save this PIN instance to CORE DATA !
-        createPinInstance(self.lat, self.lon)
+        // createPinInstance((self.lat), (self.lon))
+        // only SAVED up to 5 decicmal of lon/ lat
+        createPinInstance(((self.lat*100000).rounded()/100000), ((self.lon*100000).rounded()/100000))
         
         let annotation = MKPointAnnotation() // Pin
         annotation.coordinate = touchMapCoordinate
@@ -476,7 +480,8 @@ extension MapViewController {
     
     // CREATE a Pin Instance
     private func createPinInstance(_ lat: Double, _ lon: Double) -> Void {
-        
+        print("in func createPinInstance")
+        print("lat is \(lat), lon is \(lon)")
         // Create a PIN instance
         // convenience init(latitude: Double, longitude: Double, context: NSManagedObjectContext) { from class PIN
         let newPin = Pin(latitude: lat, longitude: lon, context: stack.context)

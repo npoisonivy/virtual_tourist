@@ -16,16 +16,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     let stack = CoreDataStack(modelName: "Model")!
 
 // If you have below called, app would erase all data everytime app is refreshed!
-//    func removeDataForDebug() {
-//        
-//        // Remove previous stuff (if any) - it delects data but not the tables
-//        do {
-//          try stack.dropAllData()
-//        } catch {
-//            print("Error dropping all objects in DataBase")
-//        }
-//    }
-//    
+    func removeDataForDebug() {
+        
+        // Remove previous stuff (if any) - it delects data but not the tables
+        do {
+          try stack.dropAllData()
+        } catch {
+            print("Error dropping all objects in DataBase")
+        }
+    }
+//
     
     
 // This is where need to modify code
@@ -45,7 +45,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         // call to remove all previous data - for easier debugging purpose
         // If you have below called, app would erase all data everytime app is refreshed!
-       // removeDataForDebug()
+        removeDataForDebug()
         
         return true
     }

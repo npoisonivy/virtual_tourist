@@ -144,7 +144,7 @@ class FlickrConvenience: NSObject {
             let pageLimit = min(self.totalPages!, 60)
             let randomPage = Int(arc4random_uniform(UInt32(pageLimit))) + 1
             let randomPageString = String(randomPage)
-            print(randomPageString)
+            print("randomPageString is \(randomPageString)")
         
             // call another netowrk call, add new parameter and get the photoArray on this randPage
             // add randPage to parameter...

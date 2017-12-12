@@ -103,6 +103,10 @@
                                         </connections>
                                     </collectionViewCell>
                                 </cells>
+                                <connections>
+                                    <outlet property="dataSource" destination="esa-0q-MS5" id="8cS-Zo-gUx"/>
+                                    <outlet property="delegate" destination="esa-0q-MS5" id="87O-rw-XFy"/>
+                                </connections>
                             </collectionView>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="kHU-sm-mdd">
                                 <rect key="frame" x="0.0" y="615" width="375" height="44"/>
