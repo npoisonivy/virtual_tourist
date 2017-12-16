@@ -18,7 +18,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     var lat: Double = 0.0
     var lon: Double = 0.0
     
-    let stack = CoreDataStack(modelName: "Model")!
+    let stack = CoreDataStack.sharedInstance()
     
     var currentPinObject:Pin? //  Error raised if -> var currentPinObject = Pin
     
@@ -133,7 +133,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         
         do {
             //2. Use context to fetch the data using NSFetchRequest - //stack.context.fetch .
-            // we set let stack = CoreDataStack -> inside CoreDataStack is let context: NSManagedObjectContext -> so we call stack.context.fetch -> and inside "context" (=open class NSManagedObjectContext ) -> it has func "fetch" -> so, context.fetch
+            // we set let stack = CoreDataStack.sharedInstance() -> inside CoreDataStack is let context: NSManagedObjectContext -> so we call stack.context.fetch -> and inside "context" (=open class NSManagedObjectContext ) -> it has func "fetch" -> so, context.fetch
             // template: let fetchedResults = try managedObjectContext!.fetch(fetchRequest)
             let fetchedResults = try stack.context.fetch(fetchRequest) as [Pin] // right side returns [Pin]
             print("AllPins are... \(fetchedResults.count), \(fetchedResults) ")
@@ -276,7 +276,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
                 fetchRequest.predicate = pred // condition
                 
                 //2. Use context to fetch the data using NSFetchRequest - //stack.context.fetch .
-                // we set let stack = CoreDataStack -> inside CoreDataStack is let context: NSManagedObjectContext -> so we call stack.context.fetch -> and inside "context" (=open class NSManagedObjectContext ) -> it has func "fetch" -> so, context.fetch
+                // we set let stack = CoreDataStack.sharedInstance() -> inside CoreDataStack is let context: NSManagedObjectContext -> so we call stack.context.fetch -> and inside "context" (=open class NSManagedObjectContext ) -> it has func "fetch" -> so, context.fetch
                 // template: let fetchedResults = try managedObjectContext!.fetch(fetchRequest)
                 let fetchedResults = try stack.context.fetch(fetchRequest) as [Pin] // right side returns array [Pin], since there is only one pin should be found, grab the pos[0]
                 print("fetchedResults is \(fetchedResults)")
@@ -427,19 +427,20 @@ extension MapViewController {
         
         
         
-        if let currentPinObject = self.currentPinObject {
-            FlickrConvenience.sharedInstance().getPhotoArrayByRandPage(currentPinObject) { (PhotoArray, error) in
-                
-                print("Photo array length is \(PhotoArray?.count)")
+        if let currentPin = self.currentPinObject {
+            FlickrConvenience.sharedInstance().getPhotoArrayByRandPage(currentPin) { (PhotoArray, error) in
                 
                 if let photoArray = PhotoArray {
+                    
+                    print("Photo array length is \(PhotoArray?.count)")
+                    
                     // for loop , for each photo array, grab each media_url, title.
                     for photo in photoArray {
                         
-                        // call  createPhotoInstance in side loop
+                        // call  createPhotoInstance inside loop
                         let mediaURL = photo["url_m"] as! String
                         let photoName = photo["title"] as! String
-                        Photo.createPhotoInstance(mediaURL, photoName, currentPinObject, self.stack.context)
+                        Photo.createPhotoInstance(mediaURL, photoName, currentPin, self.stack.context)
                         
                     }
                     // there is no "save" function to be called YET - add it with do/ try/ catch block - to avoid FAILURE

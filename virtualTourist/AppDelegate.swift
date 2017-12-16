@@ -13,7 +13,7 @@ import CoreData
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
-    let stack = CoreDataStack(modelName: "Model")!
+    let stack = CoreDataStack.sharedInstance()
 
 // If you have below called, app would erase all data everytime app is refreshed!
     func removeDataForDebug() {

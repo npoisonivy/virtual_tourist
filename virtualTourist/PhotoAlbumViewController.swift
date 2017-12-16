@@ -13,8 +13,45 @@ import CoreData
 
 class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectionViewDataSource, UICollectionViewDelegate, NSFetchedResultsControllerDelegate {
     
-    // MARK - Variables
-    var sharedContext = CoreDataStack.sharedInstance().context
+    // MARK: - Instance Variables
+    
+    /* Set up fetchResultsController - need to specify what to look for - Photos ONLY belongs to currentPin..
+     Need to use NSPredicate ? - YES */
+    
+    // assign the type of class to this var "fetchedResultsController" (=NSObject) with @interface NSFetchedResultsController<ResultType:id<NSFetchRequestResult>> : NSObject
+    // use this to debugg - lazy var fetchResultController: NSFetchedResultsController<Photo> = {
+    
+    lazy var fetchedResultsController: NSFetchedResultsController<Photo> = { () -> NSFetchedResultsController<
+        Photo> in  // what is lazy var??? Does NSFetchedResultsController have completion handler...???
+        
+        //        // need to unwrap "currentPinObject" value as it can be optional
+        // if let currentPinObject = self.currentPinObject {
+        
+        // when CH comes back, return NSFetchedResultsController back here, and we can call NSFetchRequest on that entity
+        let fetchRequest = NSFetchRequest<Photo>(entityName: "Photo") // resultType: "Photo"
+        
+        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)] // add property to it - by order of Photo's property - descending...
+        
+        // add filter "pred" - tell CoreData what to look for self.currentPinObject!
+        // fetchRequest.predicate = NSPredicate(format: "latitude == %lf AND longitude == %lf", self.currentPinObject!.latitude, (self.currentPinObject?.longitude)!) // filter photos that are from currentPin ONLY! - currentPinObject == <Pin: 0x600000485500> (entity: Pin; id: 0xd000000000180000 <x-coredata://69D0775E-3962-4DA6-9A8D-CFBC7C89DFBE/Pin/p6>
+        
+        print("currentPinObject is \(self.currentPinObject)")
+        // print("fetchRequest.predicate is \(fetchRequest.predicate)")
+        
+        // intialize this fetchedResultsController (=NSObject) with properties
+        let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.sharedContext, sectionNameKeyPath: nil, cacheName: nil)
+        // public init(fetchRequest: NSFetchRequest<ResultType>, managedObjectContext context: NSManagedObjectContext, sectionNameKeyPath: String?, cacheName name: String?)
+        
+        fetchedResultsController.delegate = self // assign PhotoAlbumViewController.swift as delegate of fetchedResultsController. so we can call all func of fetchedResultsController RIGHT HERE @ PhotoAlbumViewController.swift
+        print("fetchedResultsController is \(fetchedResultsController)")
+        // } // END of if let currentPinObject = self.currentPinObject {
+        
+        return fetchedResultsController
+        
+    }() // END of lazy var fetchedResultsController:
+    
+    
+    
     
     /* The selected indexes array keeps all of the indexPaths for cells that are "selected". The array is
      used inside cellForItemAtIndexPath to lower the alpha of selected cells. You can see how the array
@@ -29,8 +66,11 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
     // To receive what being passed from mapVC
     var currentPinObject:Pin? //  Error raised if -> var currentPinObject = Pin- remember to unwrap it below
     
-    let stack = CoreDataStack(modelName: "Model")!  // because class func createPhotoInstance(_ mediaURL: String, _ photoName: String, _ currentPin: Pin, _ context: NSManagedObjectContext) -> Void { - has context as input... pass "stack.context" in context>
+    // MARK - Variables - NEVER USED, this may be better than - "let stack = CoreDataStack.sharedInstance()"
+    var sharedContext = CoreDataStack.sharedInstance().context
     
+    let stack = CoreDataStack.sharedInstance() // because class func createPhotoInstance(_ mediaURL: String, _ photoName: String, _ currentPin: Pin, _ context: NSManagedObjectContext) -> Void { - has context as input... pass "stack.context" in context>
+
     // MARK - Outlets
     @IBOutlet weak var noPhotoLabel: UILabel!  // hide it if PhotoArray > 0
     @IBOutlet weak var newCollection: UIButton!
@@ -41,48 +81,81 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
     @IBOutlet weak var mapView: MKMapView! // it does not have MKMapViewDelegate till adding "self.mapView.delegate = self  // self = MapVC.swift"
     
     @IBAction func newCollection(_ sender: Any) {
-        // not resetting TotalPage but calling func "getPhotoArrayFromFlickrWithRandomPage"
+        /* check [selectedIndexes].count -> If > 0, call "deletedSelectedPhotos".
+        -> If ==0, call "deleteAllPhotos" */
         
+        if selectedIndexes.isEmpty {
+            deleteAllPhotos()
+        } else {
+            deleteSelectedPhotos()
+        }
     } // END of @IBAction func newCollection
     
-    // MARK: - Instance Variables
-    
-    /* Set up fetchResultsController - need to specify what to look for - Photos ONLY belongs to currentPin..
-    Need to use NSPredicate ? - YES */
-
-    
-    
-    // assign the type of class to this var "fetchedResultsController" (=NSObject) with @interface NSFetchedResultsController<ResultType:id<NSFetchRequestResult>> : NSObject
-    // use this to debugg - lazy var fetchResultController: NSFetchedResultsController<Photo> = {
-    
-    lazy var fetchedResultsController: NSFetchedResultsController<Photo> = { () -> NSFetchedResultsController<
-        Photo> in  // what is lazy var??? Does NSFetchedResultsController have completion handler...???
+    func deleteAllPhotos() {
+        // 1. delete fetchedResultsController 2. call getPhotoArrayByRandPage to return new Photos - pass unwrapped currentPinObject
         
-        //        // need to unwrap "currentPinObject" value as it can be optional
-        // if let currentPinObject = self.currentPinObject {
-
-        // when CH comes back, return NSFetchedResultsController back here, and we can call NSFetchRequest on that entity
-        let fetchRequest = NSFetchRequest<Photo>(entityName: "Photo") // resultType: "Photo"
+        // MARK - 1. delete fetchedResultsController
+        for photo in fetchedResultsController.fetchedObjects! {
+            stack.context.delete(photo)
+        }
         
-        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)] // add property to it - by order of Photo's property - descending...
-
-        // add filter "pred" - tell CoreData what to look for self.currentPinObject!
-        // fetchRequest.predicate = NSPredicate(format: "latitude == %lf AND longitude == %lf", self.currentPinObject!.latitude, (self.currentPinObject?.longitude)!) // filter photos that are from currentPin ONLY! - currentPinObject == <Pin: 0x600000485500> (entity: Pin; id: 0xd000000000180000 <x-coredata://69D0775E-3962-4DA6-9A8D-CFBC7C89DFBE/Pin/p6>
-
-        print("currentPinObject is \(self.currentPinObject)")
-        // print("fetchRequest.predicate is \(fetchRequest.predicate)")
-
-        // intialize this fetchedResultsController (=NSObject) with properties
-        let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.sharedContext, sectionNameKeyPath: nil, cacheName: nil)
-        // public init(fetchRequest: NSFetchRequest<ResultType>, managedObjectContext context: NSManagedObjectContext, sectionNameKeyPath: String?, cacheName name: String?)
-
-        fetchedResultsController.delegate = self // assign PhotoAlbumViewController.swift as delegate of fetchedResultsController. so we can call all func of fetchedResultsController RIGHT HERE @ PhotoAlbumViewController.swift
-        print("fetchedResultsController is \(fetchedResultsController)")
-    // } // END of if let currentPinObject = self.currentPinObject {
+        // MARK - 2. call getPhotoArrayByRandPage to return new Photos
+        // create Photo Instance! + save new photo Property to CoreData w/ .saveContext
+        if let currentPin = currentPinObject {
+            FlickrConvenience.sharedInstance().getPhotoArrayByRandPage(currentPin, { (PhotoArray, error) in
+                
+                // for loop, getting mediaURL , photoName, create Photo Instance
+                if let photoArray = PhotoArray {
+                    
+                    print("Photo Array length is \(PhotoArray?.count)")
+                    
+                    // for loop , for each photo array, grab each media_url, title.
+                    for photo in photoArray {
+                        let mediaURL = photo["url_m"] as! String
+                        let photoName = photo["title"] as! String
+                        
+                        // Create Photo Instance for Core Data
+                        Photo.createPhotoInstance(mediaURL,photoName, currentPin, self.stack.context)
+                    } // END of for photo in photoArray {
+                    
+                    // Actually save to CoreData
+                    do {
+                        try self.stack.saveContext()
+                        print("Successfully saved - photoArray retrieved from 'New Collection'")
+                    } catch {
+                        print("Saved failed- photoArray retrieved from 'New Collection'")
+                    }
+                } // END of if let photoArray = PhotoArray {
+            }) // END of FlickrConvenience.sharedInstance().getPhotoArrayByRandPage
+            
+                // once new photos got stored to CoreData, I assume that the communicating codes of collectionView such as "func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange" + "func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) { Will be evoked, and it will update the collectionView 's func cellForItemAt -> "func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {" which evokes configureCell again, check if this is true
+            
+        } // END of if let currentPin = currentPinObject {
+    } // END of func deleteAllPhotos() {
+    
+    func deleteSelectedPhotos() {
         
-        return fetchedResultsController
+        // check [selectedIndexes]'s content for what to delect
+        var photosToDelect = [Photo]()
+        
+        // convert simple index -> to actual content (that fetchedResultsController recognized) to be deleted -> [Photo] - type of "NSManagedObject"
+        for indexPath in selectedIndexes {
+            photosToDelect.append(fetchedResultsController.object(at: indexPath))
+        }
+        
+        // straight up delect those object from above on the context
+        for photo in photosToDelect {
+            stack.context.delete(photo)
+        }
+        
+        // Reset [selectedIndexes] after delete completed!
+        selectedIndexes = [IndexPath]()
+        
+    } // End of func deleteSelectedPhotos() {
+    
+    
+    
 
-    }() // END of lazy var fetchedResultsController:
     
     
     override func viewWillAppear(_ animated: Bool) {
@@ -124,7 +197,7 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
             try fetchedResultsController.performFetch() // get objects!
             print(".performFetch completed without error")
             print("fetchedResultsController is \(fetchedResultsController)")
-            print("fetchedObjects are photos ... \(fetchedResultsController.fetchedObjects)") // what;s the use of "fetchedObjects"???
+            print("fetchedObjects are photos ... \(fetchedResultsController.fetchedObjects)") // what;s the use of "fetchedObjects"??? - it's ALWAYS nil
             
             
             
@@ -267,10 +340,11 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
         // unwrap optional... 1. if first time, it's nil, if second time != nil
         if let photoImageData = photo.imageData {
             // if != nil, then display
-            print("Grabbing CoreData's EXISTING imageData, no API is needed for this image, \(photo.photoName) \(photo.imageData)")
+            print("Grabbing CoreData's EXISTING imageData, no API is needed for this image, \(photo.photoName)")
             let image = UIImage(data: photoImageData as Data)
             
             cell.photoImageView.image = image
+            
         } else {
             
             // display UIImage with placeholder first!
@@ -286,7 +360,7 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
             print("getImageData API call should be triggered")
             FlickrConvenience.sharedInstance().getImageData(photo, imageURL!, completionHandlerForGetImageData: { (imageData, error) in // "imageData" as NSData
                 
-                print("API to get ImageData is starting!")
+                print("API to get ImageData is starting! for \(photo.photoName)")
                 
                 if let error = error {
                     print("ImageData cannot be retrieved from Flickr server")
@@ -312,18 +386,27 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
                         // avoid blocking UI
                         DispatchQueue.main.async {
                             cell.photoImageView.image = image
+                            print("displaying photo \(photo.photoName) onto the screen")
                         } // END of DispatchQueue.main.async {
                     } // END of if let photoImageData = imageData {
                 } // END of if/ else block
             }) // END of FlickrConvenience.sharedInstance().getImageData(photo, ima
         } // END of if/else block of if let photoImageData
+        
+        // MARK: change Opaque of selected cell - distinguish selected or not
+        if let _ = selectedIndexes.index(of: indexPath) { // if found in [selectedIndexes]
+            cell.photoImageView.alpha = 0.5
+            
+        } else {
+            cell.photoImageView.alpha = 1.0
+        }
     } // END of func configureCell
     
     
     
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        print("in numberOfSectionsInCollectionView()")
+        print("in numberOfSectionsInCollectionView(), sections.count is \(fetchedResultsController.sections?.count)")
         
         return self.fetchedResultsController.sections?.count ?? 0
         
@@ -475,12 +558,6 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
 } // END of class PhotoAlbumViewController: UIViewController {
 
 private extension PhotoAlbumViewController {
-     // MARK - call these func here on PhotoAlbumViewController.swift
-    // nikki's // call below API starts calling Flickr server and update it to false by hideAI(false) when photos returned
-    // Configure hidding the activity indicator - for each picture placeholder! do it later Nikki
-    func hideAI(_ enabled: Bool) -> Void {
-        
-    }
     
     // MARK - UI features
     func setUIEnabled(_ enabled: Bool) {
@@ -494,11 +571,12 @@ private extension PhotoAlbumViewController {
     // Change Button's label - between - "New Collection" VS "Remove Selected Photos"
     func updateBottomButton() {
         
-        // if user selects >0 pic, then "Remove Selected"
+        // check [selectedIndexes].count -> If == 0, label should read "New Collection". If >0, label should read "Remove Selected Photos"
+        
         if selectedIndexes.count > 0 {
             newCollection.setTitle("Remove Selected Photos", for: .normal)
             
-        } else { // else [selectedIndexes] is empty -> means nothing is selected -> then show "New Collection"
+        } else { // else [selectedIndexes].count == 0  -> means nothing is selected
             newCollection.setTitle("New Collection", for: .normal)
         
         }
@@ -509,3 +587,5 @@ private extension PhotoAlbumViewController {
     
     
 } // END of private extension PhotoAlbumViewController {
+
+

@@ -12,8 +12,7 @@ class FlickrConvenience: NSObject {
 
     var totalPages: Int? = nil  // change according to what is returned - this needs to be a sharedInstance, otherwise, it won;t be reset @ mapViewController when user hits "back", and do anohter pin.
     
-    let stack = CoreDataStack(modelName: "Model")!   // @ struct CoreDataStack.swift - init(modelName: String) -> it's expecting modelname input, modelnames can be found @  Model.xcdatamodeid file - which is "Model" (not Pin/ Photo - theses r entities)
-    // let stack = CoreDataStack(modelName: "Model")!
+    let stack = CoreDataStack.sharedInstance() // @ struct CoreDataStack.swift - init(modelName: String) -> it's expecting modelname input, modelnames can be found @  Model.xcdatamodeid file - which is "Model" (not Pin/ Photo - theses r entities)
 
     // MARK: All network calls should be here
     
@@ -300,6 +299,7 @@ class FlickrConvenience: NSObject {
 
     /* MARK: Shared Instance  -- A singleton class returns the same instance no matter how many times an application requests it. "FlickrConvenience" is the return object of a singleton
         so that totalPage can be reset @ VC and write FlickrConvenience.sharedInstance.totalPages to rest the totalPages variable from FlickrConvenience */
+    // NEED TO KEEP THIS -> AS ONLY WAY TO GET .total{ages here ?!?!
     class func sharedInstance() -> FlickrConvenience {
         struct Singleton {
             static var sharedInstance = FlickrConvenience()
@@ -311,4 +311,14 @@ class FlickrConvenience: NSObject {
 
 
     
+
+
+
+
+
+
+
+
+
+
 
