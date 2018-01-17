@@ -179,6 +179,11 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         if pinView == nil {   // if there is no pin ever assigned on the map YET, set its design
             pinView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: reuserId)
             pinView!.pinTintColor = .red
+            
+            pinView!.isDraggable = true
+            pinView!.animatesDrop = true
+            
+            
             print("if pinView == nil")
         } else {  // dequeueReusable "Cell" = place pin of student on the map
             pinView!.annotation = annotation
@@ -195,22 +200,46 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         let view = mapView.subviews[0]
         // register gestureRecognizer - if .began, means real user's interaction
         if let gestureRecognizers = view.gestureRecognizers { // an array
+            
             for recognizer in gestureRecognizers {
                 if (recognizer.state == UIGestureRecognizerState.began || recognizer.state == UIGestureRecognizerState.ended) {
                     return true
                 }
-            } // End of for recogizer
+            } // End of for recognizer
             
         } // End of if let statement
         return false
     }
     
-    // MARK - change (VAR) properties of zoom level - use mapviewdelegate func -> detecting pinching motion - when REGION of the map is changed.
+    /*
+    /* MARK - Add regionWillChangeAnimated to enable dragging PIN */
+    func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
+        
+        if regionDidChangeFromUserInteraction() {
+            
+            // MARK - Code to change the lat and lon!
+            // code here...
+            
+            
+            
+        }
+        
+        
+    } // END of func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
+ */
+    
+    /* MARK - change (VAR) properties of zoom level - use mapviewdelegate func ->
+     detecting pinching motion - when REGION of the map is changed. */
     func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
         // from UI - mapView -> GET the NEW value FOR key array "savedMapRegion"
         
         // Only if region change is caused by user's interaction.
         if regionDidChangeFromUserInteraction() {
+            
+            // MARK - Code to change the lat and lon!
+            // code here...
+            
+            
             let regionToSave = [
                 // lat/ lon
                 "mapRegionLat": mapView.region.center.latitude,
@@ -226,6 +255,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
             print("Region is changed due to user's interaction, new value updated to \(UserDefaults.standard.object(forKey: "savedMapRegion"))")
         }
     } // END of func mapView - regionDidChangeAnimated
+    
     
     // MARK - get Current tapped/ selected Pin on the map
     
@@ -351,11 +381,11 @@ extension MapViewController {
             annotations.append(annotation)
         }
         print("total annotations are \(annotations.count)")
-       // DispatchQueue.main.async {
-            self.mapView.addAnnotations(annotations)
-            print("mapView.annotations.count \(self.mapView.annotations.count)")
+       
+        self.mapView.addAnnotations(annotations)
+        print("mapView.annotations.count \(self.mapView.annotations.count)")
         self.mapView.showAnnotations(annotations, animated: false)
-    //}
+
        // mapView.addAnnotations(annotations) // most efficient way to add pins/ annotations on map - one time
         
         
@@ -440,23 +470,20 @@ extension MapViewController {
                         // call  createPhotoInstance inside loop
                         let mediaURL = photo["url_m"] as! String
                         let photoName = photo["title"] as! String
-                        Photo.createPhotoInstance(mediaURL, photoName, currentPin, self.stack.context)
                         
-                    }
-                    // there is no "save" function to be called YET - add it with do/ try/ catch block - to avoid FAILURE
-                    do {
-                        try self.stack.saveContext()
-                        print("Successfully saved")
-                    } catch {
-                        print("Saved failed")
-                    }
-
+                        DispatchQueue.main.async {
+                            Photo.createPhotoInstance(mediaURL, photoName, currentPin, self.stack.context)
+                            
+                            // there is no "save" function to be called YET - add it with do/ try/ catch block - to avoid FAILURE
+                            do {
+                                try self.stack.saveContext()
+                                print("Successfully saved")
+                            } catch {
+                                print("Saved failed")
+                            }
+                        } // END of DispatchQueue.main.async
+                    } // END of for loop
                 }
-                
-                
-                
-                
-                
             }
         } // end of if let
  

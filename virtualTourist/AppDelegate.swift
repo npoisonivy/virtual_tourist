@@ -45,7 +45,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         // call to remove all previous data - for easier debugging purpose
         // If you have below called, app would erase all data everytime app is refreshed!
-        removeDataForDebug()
+        // removeDataForDebug()
         
         return true
     }

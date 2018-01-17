@@ -150,6 +150,9 @@ class FlickrConvenience: NSObject {
             var methodParametersWithPageNumber = methodParameters
             methodParametersWithPageNumber[Constants.FlickrParameterKeys.Page] = randomPageString // ASK
         
+            // add "per_page" to methodParameters -> to limit only 27 photos are downloaded at each call
+            methodParametersWithPageNumber[Constants.FlickrParameterKeys.PhotosPerCall] = Constants.FlickrParameterValues.PhotosPerCall  // Passing String "27"
+        
             // Make another network call, this time, search with the random number obtained from above
             // create session and request
             let session = URLSession.shared
@@ -263,7 +266,9 @@ class FlickrConvenience: NSObject {
             // deal with returned data!
             if let returnedImageData = data {
                 // add to photo's property
-                currentCellPhoto.imageData = returnedImageData as NSData? // Photo's @NSManaged public var imageData: NSData?
+                DispatchQueue.main.async {
+                    currentCellPhoto.imageData = returnedImageData as NSData? // Photo's @NSManaged public var imageData: NSData?
+                }
                 
                 // should I update view here??? not really... - because you will block the UI as there are lots of photos! - do it at PhotoAlbumViewController...
                 completionHandlerForGetImageData(returnedImageData as NSData, nil)

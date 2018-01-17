@@ -41,6 +41,7 @@ struct Constants {
         static let NoJsonCallback = "nojsoncallback"
         static let BoundingBox = "bbox" // do we need bbox? YES - pro: want to show photo around that area i/o exact lon/lat...
         static let Page = "page" // for its value, we will assign a random page from view controller. The value is not a constant - &page=1& -> page=randomPage that will be assign @ VC.swift
+        static let PhotosPerCall = "per_page"
         
     }
     
@@ -51,6 +52,7 @@ struct Constants {
         static let MediumURL = "url_m" // value of key extras
         static let ResponseFormat = "json" // format=json
         static let DisableJSONCallback = "1" // nojsoncallback=1
+        static let PhotosPerCall = "9"
     }
     
     // MARK: Flickr Response Keys

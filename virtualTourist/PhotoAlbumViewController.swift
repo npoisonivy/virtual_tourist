@@ -21,6 +21,10 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
     // assign the type of class to this var "fetchedResultsController" (=NSObject) with @interface NSFetchedResultsController<ResultType:id<NSFetchRequestResult>> : NSObject
     // use this to debugg - lazy var fetchResultController: NSFetchedResultsController<Photo> = {
     
+    // To receive what being passed from mapVC
+    var currentPinObject:Pin? //  Error raised if -> var currentPinObject = Pin- remember to unwrap it below
+    
+    
     lazy var fetchedResultsController: NSFetchedResultsController<Photo> = { () -> NSFetchedResultsController<
         Photo> in  // what is lazy var??? Does NSFetchedResultsController have completion handler...???
         
@@ -33,6 +37,7 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
         fetchRequest.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)] // add property to it - by order of Photo's property - descending...
         
         // add filter "pred" - tell CoreData what to look for self.currentPinObject!
+        // fetchRequest.predicate = NSPredicate(format: "pin = %@", currentPinObject!)
         // fetchRequest.predicate = NSPredicate(format: "latitude == %lf AND longitude == %lf", self.currentPinObject!.latitude, (self.currentPinObject?.longitude)!) // filter photos that are from currentPin ONLY! - currentPinObject == <Pin: 0x600000485500> (entity: Pin; id: 0xd000000000180000 <x-coredata://69D0775E-3962-4DA6-9A8D-CFBC7C89DFBE/Pin/p6>
         
         print("currentPinObject is \(self.currentPinObject)")
@@ -63,8 +68,7 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
     var deletedIndexPaths: [IndexPath]!
     var updatedIndexPaths: [IndexPath]!
     
-    // To receive what being passed from mapVC
-    var currentPinObject:Pin? //  Error raised if -> var currentPinObject = Pin- remember to unwrap it below
+    
     
     // MARK - Variables - NEVER USED, this may be better than - "let stack = CoreDataStack.sharedInstance()"
     var sharedContext = CoreDataStack.sharedInstance().context
@@ -74,6 +78,8 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
     // MARK - Outlets
     @IBOutlet weak var noPhotoLabel: UILabel!  // hide it if PhotoArray > 0
     @IBOutlet weak var newCollection: UIButton!
+    
+    
     
     // DO i need to add collectionView ? - YES - as need to manuplicate size of each Photo cell shows on this collection view
     @IBOutlet weak var collectionView: UICollectionView!
@@ -114,18 +120,22 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
                         let mediaURL = photo["url_m"] as! String
                         let photoName = photo["title"] as! String
                         
-                        // Create Photo Instance for Core Data
-                        Photo.createPhotoInstance(mediaURL,photoName, currentPin, self.stack.context)
+                        DispatchQueue.main.async {
+                            // Create Photo Instance for Core Data
+                            Photo.createPhotoInstance(mediaURL,photoName, currentPin, self.stack.context)
+
+                            // Actually save to CoreData
+                            do {
+                                try self.stack.saveContext()
+                                print("Successfully saved - photoArray retrieved from 'New Collection'")
+                            } catch {
+                                print("Saved failed- photoArray retrieved from 'New Collection'")
+                            }
+
+                        }
                     } // END of for photo in photoArray {
                     
-                    // Actually save to CoreData
-                    do {
-                        try self.stack.saveContext()
-                        print("Successfully saved - photoArray retrieved from 'New Collection'")
-                    } catch {
-                        print("Saved failed- photoArray retrieved from 'New Collection'")
-                    }
-                } // END of if let photoArray = PhotoArray {
+                                    } // END of if let photoArray = PhotoArray {
             }) // END of FlickrConvenience.sharedInstance().getPhotoArrayByRandPage
             
                 // once new photos got stored to CoreData, I assume that the communicating codes of collectionView such as "func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange" + "func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) { Will be evoked, and it will update the collectionView 's func cellForItemAt -> "func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {" which evokes configureCell again, check if this is true
@@ -336,9 +346,11 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
         let photo = self.fetchedResultsController.object(at: indexPath)
         
         // return Photo object at the indexPath - includes - mediaURl, photoName & imageData, etc - check imageData == nil?
-   
+        
         // unwrap optional... 1. if first time, it's nil, if second time != nil
         if let photoImageData = photo.imageData {
+        
+            
             // if != nil, then display
             print("Grabbing CoreData's EXISTING imageData, no API is needed for this image, \(photo.photoName)")
             let image = UIImage(data: photoImageData as Data)
@@ -346,9 +358,11 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
             cell.photoImageView.image = image
             
         } else {
-            
+        
             // display UIImage with placeholder first!
-            cell.photoImageView.image = #imageLiteral(resourceName: "placeHolder")
+            // cell.photoImageView.image = #imageLiteral(resourceName: "placeHolder")
+            cell.photoImageView.image = #imageLiteral(resourceName: "placeholder-1")
+            self.hideAI(cell, false) // show activity Indicator
             
             print("API to get ImageData should start! for \(photo.photoName)")
             
@@ -358,9 +372,10 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
             
             // API call
             print("getImageData API call should be triggered")
+            
             FlickrConvenience.sharedInstance().getImageData(photo, imageURL!, completionHandlerForGetImageData: { (imageData, error) in // "imageData" as NSData
                 
-                print("API to get ImageData is starting! for \(photo.photoName)")
+                // print("API to get ImageData is starting! for \(photo.photoName)")
                 
                 if let error = error {
                     print("ImageData cannot be retrieved from Flickr server")
@@ -368,26 +383,28 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
                     // unwrap photoImageData + updating UI...
                     if let photoImageData = imageData {
                         
-                        // add value to Photo's property "imageData" (NSData)
-                        photo.imageData = photoImageData
-                        
-                        // need to call .save on the current Context - to really save it to CoreData!
-                        // Call it with do/ try/ catch block - to avoid FAILURE
-                        do {
-                            try self.stack.saveContext()
-                            print("Successuly saved property imageData to Photo")
-                        } catch {
-                            print("Save failed for - property imageData to Photo ")
-                        }
-                        
-                        // retrieve url from coreData again for the image...
-                        let image = UIImage(data: photoImageData as Data)
-                        
                         // avoid blocking UI
                         DispatchQueue.main.async {
+                            // add value to Photo's property "imageData" (NSData)
+                            photo.imageData = photoImageData
+                            
+                            // need to call .save on the current Context - to really save it to CoreData!
+                            // Call it with do/ try/ catch block - to avoid FAILURE
+                            do {
+                                try self.stack.saveContext()
+                                print("Successuly saved property imageData to Photo")
+                            } catch {
+                                print("Save failed for - property imageData to Photo ")
+                            }
+                            
+                            // retrieve url from coreData again for the image...
+                            let image = UIImage(data: photoImageData as Data)
+                            
+                            self.hideAI(cell, true) // hide activity Indicator
                             cell.photoImageView.image = image
                             print("displaying photo \(photo.photoName) onto the screen")
                         } // END of DispatchQueue.main.async {
+                        
                     } // END of if let photoImageData = imageData {
                 } // END of if/ else block
             }) // END of FlickrConvenience.sharedInstance().getImageData(photo, ima
@@ -582,10 +599,39 @@ private extension PhotoAlbumViewController {
         }
     } // END of func updateBottomButton() {
     
-    
-    
-    
+    // MARK - Activity Indicator - need to place it inside func ConfigureCell()
+    func hideAI(_ cell: PhotoCollectionViewCell, _ enabled: Bool) -> Void {
+        // if true - means hide AI after data retrieved from server; // false - show AI - during network call
+        cell.activityIndicator.isHidden = enabled
+        
+        if enabled {
+            cell.activityIndicator.stopAnimating()
+        } else {
+            cell.activityIndicator.startAnimating()
+        }
+    }
     
 } // END of private extension PhotoAlbumViewController {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
