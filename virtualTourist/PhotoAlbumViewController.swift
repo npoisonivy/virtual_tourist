@@ -25,11 +25,13 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
     var currentPinObject:Pin? //  Error raised if -> var currentPinObject = Pin- remember to unwrap it below
     
     
+    
     lazy var fetchedResultsController: NSFetchedResultsController<Photo> = { () -> NSFetchedResultsController<
         Photo> in  // what is lazy var??? Does NSFetchedResultsController have completion handler...???
         
         //        // need to unwrap "currentPinObject" value as it can be optional
         // if let currentPinObject = self.currentPinObject {
+        
         
         // when CH comes back, return NSFetchedResultsController back here, and we can call NSFetchRequest on that entity
         let fetchRequest = NSFetchRequest<Photo>(entityName: "Photo") // resultType: "Photo"
@@ -40,6 +42,8 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
         // fetchRequest.predicate = NSPredicate(format: "pin = %@", currentPinObject!)
         // fetchRequest.predicate = NSPredicate(format: "latitude == %lf AND longitude == %lf", self.currentPinObject!.latitude, (self.currentPinObject?.longitude)!) // filter photos that are from currentPin ONLY! - currentPinObject == <Pin: 0x600000485500> (entity: Pin; id: 0xd000000000180000 <x-coredata://69D0775E-3962-4DA6-9A8D-CFBC7C89DFBE/Pin/p6>
         
+        let predicate = NSPredicate(format: <#T##String#>, <#T##args: CVarArg...##CVarArg#>)
+            
         print("currentPinObject is \(self.currentPinObject)")
         // print("fetchRequest.predicate is \(fetchRequest.predicate)")
         
@@ -156,6 +160,13 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
         // straight up delect those object from above on the context
         for photo in photosToDelect {
             stack.context.delete(photo)
+            
+            do {
+                try self.stack.saveContext()
+                print("Successfully saved")
+            } catch {
+                print("Saved failed")
+            }
         }
         
         // Reset [selectedIndexes] after delete completed!
@@ -558,7 +569,7 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
         collectionView.performBatchUpdates({() -> Void in // completionHandler, so it does not block queue!
             
             for indexPath in self.insertedIndexPaths {
-                self.collectionView.insertItems(at: [indexPath]) // need [] outside indepath - indicate its type is [Array.Index]
+                self.collectionView.insertItefetchRequestms(at: [indexPath]) // need [] outside indepath - indicate its type is [Array.Index]
             }
             
             for indexPath in self.deletedIndexPaths {

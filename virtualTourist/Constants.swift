@@ -52,7 +52,7 @@ struct Constants {
         static let MediumURL = "url_m" // value of key extras
         static let ResponseFormat = "json" // format=json
         static let DisableJSONCallback = "1" // nojsoncallback=1
-        static let PhotosPerCall = "9"
+        static let PhotosPerCall = "27"
     }
     
     // MARK: Flickr Response Keys

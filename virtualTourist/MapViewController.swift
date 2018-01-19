@@ -40,7 +40,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         // Mentor advises me to read more about tap/ other geseture recognizzer!
         // MARK - Create UILongPressGestureRecognizer
         let longPressRecogniser = UILongPressGestureRecognizer(target: self, action: #selector(MapViewController.handleLongPress(_:)))
-        longPressRecogniser.minimumPressDuration = 1.0
+        longPressRecogniser.minimumPressDuration = 0.5
         mapView.addGestureRecognizer(longPressRecogniser) // registered -> call .handleLongPress when user perform the action
         
         // change (VAR) properties of zoom level - use mapviewdelegate func -> detecting pinching motion - when REGION of the map is changed.
