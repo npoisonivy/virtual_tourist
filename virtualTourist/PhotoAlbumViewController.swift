@@ -21,10 +21,7 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
     // assign the type of class to this var "fetchedResultsController" (=NSObject) with @interface NSFetchedResultsController<ResultType:id<NSFetchRequestResult>> : NSObject
     // use this to debugg - lazy var fetchResultController: NSFetchedResultsController<Photo> = {
     
-    // To receive what being passed from mapVC
     var currentPinObject:Pin? //  Error raised if -> var currentPinObject = Pin- remember to unwrap it below
-    
-    
     
     lazy var fetchedResultsController: NSFetchedResultsController<Photo> = { () -> NSFetchedResultsController<
         Photo> in  // what is lazy var??? Does NSFetchedResultsController have completion handler...???
@@ -38,12 +35,16 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
         
         fetchRequest.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)] // add property to it - by order of Photo's property - descending...
         
-        // add filter "pred" - tell CoreData what to look for self.currentPinObject!
+        // add filter "pred" - tell CoreData what to look for matching self.currentPinObject!
+        // let pred = NSPredicate(format: "latitude == %@ && longitude == %@ ", argumentArray: [self.currentPinObject!.latitude, self.currentPinObject!.longitude])
+        
+        let pred = NSPredicate(format: "pin == %@", "1")
+        fetchRequest.predicate = pred // condition
+        
         // fetchRequest.predicate = NSPredicate(format: "pin = %@", currentPinObject!)
         // fetchRequest.predicate = NSPredicate(format: "latitude == %lf AND longitude == %lf", self.currentPinObject!.latitude, (self.currentPinObject?.longitude)!) // filter photos that are from currentPin ONLY! - currentPinObject == <Pin: 0x600000485500> (entity: Pin; id: 0xd000000000180000 <x-coredata://69D0775E-3962-4DA6-9A8D-CFBC7C89DFBE/Pin/p6>
         
-        let predicate = NSPredicate(format: <#T##String#>, <#T##args: CVarArg...##CVarArg#>)
-            
+        
         print("currentPinObject is \(self.currentPinObject)")
         // print("fetchRequest.predicate is \(fetchRequest.predicate)")
         
@@ -176,9 +177,6 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
     
     
     
-
-    
-    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
@@ -202,7 +200,7 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
         setUIEnabled(true) // for testing propose, show collectionView and hide no image label anyway!
         
         if let currentPin = currentPinObject {
-            print("Pin got passted to PhotoAlbumViewController is - lat: \(currentPin.latitude) & lon: \(currentPin.longitude)")
+            print("Pin is passed to PhotoAlbumViewController is - lat: \(currentPin.latitude) & lon: \(currentPin.longitude)")
             
         }
         
@@ -569,7 +567,7 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
         collectionView.performBatchUpdates({() -> Void in // completionHandler, so it does not block queue!
             
             for indexPath in self.insertedIndexPaths {
-                self.collectionView.insertItefetchRequestms(at: [indexPath]) // need [] outside indepath - indicate its type is [Array.Index]
+                self.collectionView.insertItems(at: [indexPath]) // need [] outside indepath - indicate its type is [Array.Index]
             }
             
             for indexPath in self.deletedIndexPaths {
