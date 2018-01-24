@@ -293,6 +293,11 @@ class MapViewController: UIViewController, MKMapViewDelegate {
             // Pass lat/ lon at decimal 5.
             let pred = NSPredicate(format: "latitude == %lf AND longitude == %lf", ((selectedCoordinate.latitude*100000).rounded()/100000), ((selectedCoordinate.longitude*100000).rounded()/100000)) // "=" is same as "==" in predicate - both mean equal to
             
+            print("setting condition below to look up from coreData...")
+            print("lat after round up is \((selectedCoordinate.latitude*100000).rounded()/100000)")
+            
+            print("lon after round up is \((selectedCoordinate.longitude*100000).rounded()/100000)")
+            
             // pred is a condition - use this NSPredicate, we need to create a fetchResult
             // fetchRequest has a predicate property, so we add that property now
             
@@ -315,7 +320,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
                 currentPinObject?.latitude = 37.2542
                 currentPinObject?.longitude = 122.0396 */
                 
-                print("matching Pin is, \(self.currentPinObject), latitude is \(self.currentPinObject), longitude is \(self.currentPinObject)")
+                print("matching Pin found from Core Data is, \(self.currentPinObject), latitude is \(self.currentPinObject?.latitude), longitude is \(self.currentPinObject?.longitude)")
                 
                 searchByCoordinate() // call API - request Flickr server based on currentPin's lat, lon to return corresponding Photo back and save to our coreData
                 

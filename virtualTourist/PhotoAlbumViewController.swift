@@ -24,9 +24,9 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
     var currentPinObject:Pin? //  Error raised if -> var currentPinObject = Pin- remember to unwrap it below
     
     lazy var fetchedResultsController: NSFetchedResultsController<Photo> = { () -> NSFetchedResultsController<
-        Photo> in  // what is lazy var??? Does NSFetchedResultsController have completion handler...???
+        Photo> in  // The lazy prefix means the data item is not instantiated until it is first used.
         
-        //        // need to unwrap "currentPinObject" value as it can be optional
+        // need to unwrap "currentPinObject" value as it can be optional - but error raised...
         // if let currentPinObject = self.currentPinObject {
         
         
@@ -36,17 +36,10 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
         fetchRequest.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)] // add property to it - by order of Photo's property - descending...
         
         // add filter "pred" - tell CoreData what to look for matching self.currentPinObject!
-        // let pred = NSPredicate(format: "latitude == %@ && longitude == %@ ", argumentArray: [self.currentPinObject!.latitude, self.currentPinObject!.longitude])
-        
-        let pred = NSPredicate(format: "pin == %@", "1")
-        fetchRequest.predicate = pred // condition
-        
-        // fetchRequest.predicate = NSPredicate(format: "pin = %@", currentPinObject!)
-        // fetchRequest.predicate = NSPredicate(format: "latitude == %lf AND longitude == %lf", self.currentPinObject!.latitude, (self.currentPinObject?.longitude)!) // filter photos that are from currentPin ONLY! - currentPinObject == <Pin: 0x600000485500> (entity: Pin; id: 0xd000000000180000 <x-coredata://69D0775E-3962-4DA6-9A8D-CFBC7C89DFBE/Pin/p6>
-        
+         let pred = NSPredicate(format: "pin == %@", self.currentPinObject!)
+         fetchRequest.predicate = pred // condition
         
         print("currentPinObject is \(self.currentPinObject)")
-        // print("fetchRequest.predicate is \(fetchRequest.predicate)")
         
         // intialize this fetchedResultsController (=NSObject) with properties
         let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.sharedContext, sectionNameKeyPath: nil, cacheName: nil)
@@ -61,8 +54,6 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
     }() // END of lazy var fetchedResultsController:
     
     
-    
-    
     /* The selected indexes array keeps all of the indexPaths for cells that are "selected". The array is
      used inside cellForItemAtIndexPath to lower the alpha of selected cells. You can see how the array
      works by searching through the code for "selectedIndexes" */
@@ -73,8 +64,6 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
     var deletedIndexPaths: [IndexPath]!
     var updatedIndexPaths: [IndexPath]!
     
-    
-    
     // MARK - Variables - NEVER USED, this may be better than - "let stack = CoreDataStack.sharedInstance()"
     var sharedContext = CoreDataStack.sharedInstance().context
     
@@ -83,8 +72,6 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
     // MARK - Outlets
     @IBOutlet weak var noPhotoLabel: UILabel!  // hide it if PhotoArray > 0
     @IBOutlet weak var newCollection: UIButton!
-    
-    
     
     // DO i need to add collectionView ? - YES - as need to manuplicate size of each Photo cell shows on this collection view
     @IBOutlet weak var collectionView: UICollectionView!
@@ -182,11 +169,8 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
         
         // check PhotoArray.count??? by calling currentPin up, look it up against CoreData fetchedResult. return photoArray.count here... nikki
         
-        // viewDidLoad() - when loading pic (completion handler from URLsession call), disable new collection during the time - just like the one in onthemap - the loading one.
-        
-        // get the currentPinObject's coordinate, and display 
         self.mapView.delegate = self //  set PhotoAlbumVC.swift as delegate of mapView, so we can call mapView's func right here in this file
-        displayCurrentPinOnMap()
+        displayCurrentPinOnMap()          // get the currentPinObject's coordinate, and display
 
         
     } // END of override func viewWillAppear
@@ -199,18 +183,14 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
         
         setUIEnabled(true) // for testing propose, show collectionView and hide no image label anyway!
         
-        if let currentPin = currentPinObject {
-            print("Pin is passed to PhotoAlbumViewController is - lat: \(currentPin.latitude) & lon: \(currentPin.longitude)")
-            
-        }
-        
+        print("Pin is passed to PhotoAlbumViewController is - lat: \(self.currentPinObject?.latitude) & lon: \(self.currentPinObject?.longitude)")
         
         // Start the fetched results controller -
         /*  Executes the fetch request on the store to get objects.
          Returns YES if successful or NO (and an error) if a problem occurred.
          An error is returned if the fetch request specified doesn't include a sort descriptor that uses sectionNameKeyPath.
          After executing this method, the fetched objects can be accessed with the property 'fetchedObjects' */
- 
+        
         var error: NSError?
         do {
             try fetchedResultsController.performFetch() // get objects!
@@ -231,7 +211,7 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
         updateBottomButton()
         
     } // END of viewDidLoad()
-    
+
     
     
         // call getPhotoTotalPage and see what it returns - oh, also need to hard cord Hakone Garden @ the API call to make sure there are pictures to return for testing
@@ -350,7 +330,6 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
         let photos = fetchedResultsController.fetchedObjects
         print("photos here is the fetchedObjects \(photos)")
         
-        
         // MARK - real code:
         let photo = self.fetchedResultsController.object(at: indexPath)
         
@@ -359,7 +338,6 @@ class PhotoAlbumViewController: UIViewController, MKMapViewDelegate, UICollectio
         // unwrap optional... 1. if first time, it's nil, if second time != nil
         if let photoImageData = photo.imageData {
         
-            
             // if != nil, then display
             print("Grabbing CoreData's EXISTING imageData, no API is needed for this image, \(photo.photoName)")
             let image = UIImage(data: photoImageData as Data)
